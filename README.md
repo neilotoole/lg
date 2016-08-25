@@ -1,4 +1,4 @@
-# lg: golang loging library
+# go-lg: golang logging library
 `lg` is yet another golang logging package, primarily intended for debugging/tracing purposes. 
 It outputs in Apache httpd `error_log` format. To make it easy to debug, it logs the the
 invoking file name, line number, and function name.
@@ -14,12 +14,14 @@ import "github.com/neilotoole/go-lg/lg"
 
 func ShowMe() {
         lg.Debugf("the answer is: %d", 42)
+        lg.Errorf("trouble ahead")
 }
 ```
 produces:
 
 ```
 I [24/Aug/2016:20:26:41 -0600] [example.go:6:example.ShowMe] the answer is: 42
+E [24/Aug/2016:20:26:41 -0600] [example.go:7:example.ShowMe] trouble ahead
 ```
 
 By default, lg outputs to `stdout`/`stderr`, but you can specify an alternative
