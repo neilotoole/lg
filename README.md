@@ -17,14 +17,14 @@ func ShowMe() {
         lg.Errorf("trouble ahead")
 }
 ```
-produces:
+That produces:
 
 ```
 I [24/Aug/2016:20:26:41 -0600] [example.go:6:example.ShowMe] the answer is: 42
 E [24/Aug/2016:20:26:41 -0600] [example.go:7:example.ShowMe] trouble ahead
 ```
 
-By default, lg outputs to `stdout`/`stderr`, but you can specify an alternative
+By default, `lg` outputs to `stdout`/`stderr`, but you can specify an alternative
 destination with `lg.Use()`. Typically this is a log file, and your code might
 look something like this:
 
