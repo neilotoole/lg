@@ -1,4 +1,4 @@
-# go-lg
+# lg: golang loging library
 `lg` is yet another golang logging package, primarily intended for debugging/tracing purposes. 
 It outputs in Apache httpd `error_log` format. To make it easy to debug, it logs the the
 invoking file name, line number, and function name.
