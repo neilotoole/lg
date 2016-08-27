@@ -31,7 +31,7 @@ func TestFilters(t *testing.T) {
 	buf = useNewLgBuf()
 	lg.Levels(lg.LevelAll)
 	logPackages()
-	assert.Equal(t, 6, countLines(buf), "ExcludeLevels should be reset")
+	assert.Equal(t, 6, countLines(buf), "levels should be reset to all")
 
 	buf = useNewLgBuf()
 	lg.Exclude("github.com/neilotoole/go-lg/test/filter/pkg1")
@@ -56,7 +56,7 @@ func TestFilters(t *testing.T) {
 	buf = useNewLgBuf()
 	lg.Excluded = nil
 	logPackages()
-	assert.Equal(t, 6, countLines(buf), "should have reset all filters")
+	assert.Equal(t, 6, countLines(buf), "should have reset all pkg filters")
 
 	buf = useNewLgBuf()
 	lg.Disable()
