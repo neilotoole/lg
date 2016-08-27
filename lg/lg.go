@@ -40,9 +40,18 @@ func Disable() {
 
 var filter = levelEnabled | LevelDebug | levelWarn | LevelError
 
-// ExcludePkgs is a list of (fully-qualifed) package names to be excluded from
+// Excluded is a list of (fully-qualified) package names to be excluded from
 // log output. Any sub-packages will also be excluded.
-var ExcludePkgs = []string{}
+var Excluded = []string{}
+
+// Exclude appends the provided (full-qualified) package names to the list of packages
+// to be excluded from log output. Any sub-packages will also be excluded.
+func Exclude(pkgs ...string) {
+
+	Mu.Lock()
+	defer Mu.Unlock()
+	Excluded = append(Excluded, pkgs...)
+}
 
 // Level represents log levels.
 type Level uint8
@@ -71,19 +80,6 @@ func Levels(levels ...Level) {
 		filter = filter | lvl
 	}
 }
-
-// ExcludeLevels is the set of log levels to exclude. By default this is empty.
-//var excludeLevels = []Level{}
-//
-//func isExcludedLevel(lvl Level) bool {
-//	levels := excludeLevels
-//	for _, exclude := range levels {
-//		if exclude == lvl {
-//			return true
-//		}
-//	}
-//	return false
-//}
 
 // apacheFormat is the standard apache timestamp format.
 const apacheFormat = `02/Jan/2006:15:04:05 -0700`
@@ -166,11 +162,11 @@ func log(locked bool, calldepth int, level Level, format string, v ...interface{
 	}
 
 	t := time.Now()
+	exclPkgs := Excluded
+
 	pc := make([]uintptr, 10) // at least 1 entry needed
 	runtime.Callers(2+calldepth, pc)
 	fnName := runtime.FuncForPC(pc[0]).Name()
-
-	exclPkgs := ExcludePkgs
 
 	if len(exclPkgs) > 0 || !LongFnName {
 		// fnName looks like github.com/neilotoole/go-lg/test/filter/pkg2.LogDebug

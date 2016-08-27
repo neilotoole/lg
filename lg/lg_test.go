@@ -34,27 +34,27 @@ func TestFilters(t *testing.T) {
 	assert.Equal(t, 6, countLines(buf), "ExcludeLevels should be reset")
 
 	buf = useNewLgBuf()
-	lg.ExcludePkgs = []string{"github.com/neilotoole/go-lg/test/filter/pkg1"}
+	lg.Exclude("github.com/neilotoole/go-lg/test/filter/pkg1")
 	logPackages()
 	assert.Equal(t, 4, countLines(buf))
 
 	buf = useNewLgBuf()
-	lg.ExcludePkgs = []string{"github.com/neilotoole/go-lg/test/filter/pkg1", "github.com/neilotoole/go-lg/test/filter/pkg2"}
+	lg.Exclude("github.com/neilotoole/go-lg/test/filter/pkg1", "github.com/neilotoole/go-lg/test/filter/pkg2")
 	logPackages()
 	assert.Equal(t, 2, countLines(buf))
 
 	buf = useNewLgBuf()
-	lg.ExcludePkgs = []string{"github.com/neilotoole/go-lg/test/filter/pkg1", "github.com/neilotoole/go-lg/test/filter/pkg2", "github.com/neilotoole/go-lg/test/filter/pkg3"}
+	lg.Exclude("github.com/neilotoole/go-lg/test/filter/pkg1", "github.com/neilotoole/go-lg/test/filter/pkg2", "github.com/neilotoole/go-lg/test/filter/pkg3")
 	logPackages()
 	assert.Equal(t, 0, countLines(buf))
 
 	buf = useNewLgBuf()
-	lg.ExcludePkgs = []string{"github.com/neilotoole/go-lg/test/filter"}
+	lg.Exclude("github.com/neilotoole/go-lg/test/filter")
 	logPackages()
 	assert.Equal(t, 0, countLines(buf), "all sub-packages should have been excluded")
 
 	buf = useNewLgBuf()
-	lg.ExcludePkgs = nil
+	lg.Excluded = nil
 	logPackages()
 	assert.Equal(t, 6, countLines(buf), "should have reset all filters")
 
