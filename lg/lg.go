@@ -39,8 +39,6 @@ const (
 	LevelDebug Level = "I"
 )
 
-var lvls = []Level{LevelDebug, LevelError}
-
 // ExcludeLevels is the set of log levels to exclude. By default this is empty.
 var ExcludeLevels = []Level{}
 
