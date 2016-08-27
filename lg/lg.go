@@ -24,6 +24,13 @@ import (
 	"time"
 )
 
+// Enabled is the master on/off switch for log output. Default is true.
+var Enabled = true
+
+// ExcludePkgs is a list of (fully-qualifed) package names to be excluded from
+// log output. Any sub-packages will also be excluded.
+var ExcludePkgs = []string{}
+
 // Level represents log levels.
 type Level string
 
@@ -34,11 +41,17 @@ const (
 
 var lvls = []Level{LevelDebug, LevelError}
 
-// Levels specifies the set of levels to output. The default is all levels.
-// To disable logging, invoke  this function with no parameters. Note that you
-// must explicitly specify each level that you desire output for.
-func Levels(levels ...Level) {
-	lvls = levels
+// ExcludeLevels is the set of log levels to exclude. By default this is empty.
+var ExcludeLevels = []Level{}
+
+func isExcludedLevel(lvl Level) bool {
+	levels := ExcludeLevels
+	for _, exclude := range levels {
+		if exclude == lvl {
+			return true
+		}
+	}
+	return false
 }
 
 // apacheFormat is the standard apache timestamp format.
@@ -46,7 +59,12 @@ const apacheFormat = `02/Jan/2006:15:04:05 -0700`
 
 var wOut io.Writer = os.Stdout
 var wErr io.Writer = os.Stderr
-var mu sync.Mutex
+
+// Mu is the lg package's mutex. The mutex is exposed for the rare circumstance where
+// the client needs to mutate package variables (e.g. ExcludePkgs or ExcludeLevels)
+// in a concurrency situation. Typically these vars are configured once during the
+// init() phase.
+var Mu sync.Mutex
 
 // LongFnName determines whether the full path/to/pkg.func is used. Default is pkg.func.
 var LongFnName = false
@@ -56,8 +74,8 @@ var LongFilePath = false
 
 // Use specifies the log output destination. The default is os.Stdout/os.Stderr.
 func Use(dest io.Writer) {
-	mu.Lock()
-	defer mu.Unlock()
+	Mu.Lock()
+	defer Mu.Unlock()
 	wOut = dest
 	wErr = dest
 }
@@ -91,28 +109,21 @@ func ErrorfN(calldepth int, format string, v ...interface{}) {
 // the message is also printed to os.Stderr.
 func Fatalf(format string, v ...interface{}) {
 
-	mu.Lock()
-	defer mu.Unlock()
+	Mu.Lock()
+	defer Mu.Unlock()
 	msg := fmt.Sprintf(format, v...)
-	log(true, 1, LevelError, msg)
+	if !isExcludedLevel(LevelError) {
+		log(true, 1, LevelError, msg)
 
-	if wOut != os.Stdout && wOut != os.Stderr {
-		fmt.Fprintln(os.Stderr, msg)
+		if wOut != os.Stdout && wOut != os.Stderr {
+			fmt.Fprintln(os.Stderr, msg)
+		}
 	}
 	os.Exit(1)
 }
 
 func log(locked bool, calldepth int, level Level, format string, v ...interface{}) {
-
-	isLevelEnabled := false
-	for _, lvl := range lvls {
-		if level == lvl {
-			isLevelEnabled = true
-			break
-		}
-	}
-
-	if !isLevelEnabled {
+	if !Enabled || isExcludedLevel(level) {
 		return
 	}
 
@@ -120,10 +131,31 @@ func log(locked bool, calldepth int, level Level, format string, v ...interface{
 	pc := make([]uintptr, 10) // at least 1 entry needed
 	runtime.Callers(2+calldepth, pc)
 	fnName := runtime.FuncForPC(pc[0]).Name()
-	if !LongFnName {
-		parts := strings.Split(fnName, "/")
-		fnName = parts[len(parts)-1]
+
+	exclPkgs := ExcludePkgs
+
+	if len(exclPkgs) > 0 || !LongFnName {
+		// fnName looks like github.com/neilotoole/go-lg/test/filter/pkg2.LogDebug
+		fnNameParts := strings.Split(fnName, "/")
+		lastPart := fnNameParts[len(fnNameParts)-1]
+
+		if !LongFnName {
+			fnName = lastPart
+		}
+
+		if len(exclPkgs) > 0 {
+			// we need only the package part of the last element
+			// e.g. pkg2.LogDebug -> pkg2
+			fnNameParts[len(fnNameParts)-1] = lastPart[:strings.IndexRune(lastPart, '.')]
+			pkgName := strings.Join(fnNameParts, "/")
+			for _, exclPkg := range exclPkgs {
+				if strings.Index(pkgName, exclPkg) == 0 {
+					return
+				}
+			}
+		}
 	}
+
 	_, file, line, ok := runtime.Caller(calldepth + 1)
 	if !ok {
 		file = "???"
@@ -139,8 +171,8 @@ func log(locked bool, calldepth int, level Level, format string, v ...interface{
 	tpl := `%s [%s] [%s:%d:%s] %s`
 	str := fmt.Sprintf(tpl, level, stamp, file, line, fnName, fmt.Sprintf(format, v...))
 	if !locked {
-		mu.Lock()
-		defer mu.Unlock()
+		Mu.Lock()
+		defer Mu.Unlock()
 	}
 
 	if level == LevelError {
