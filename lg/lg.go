@@ -24,33 +24,66 @@ import (
 	"time"
 )
 
-// Enabled is the master on/off switch for log output. Default is true.
-var Enabled = true
+// enabled is the master on/off switch for log output. Default is true.
+var enabled = true
+
+// Enable turns on log output.
+func Enable() {
+	//enabled = true
+	filter = filter | levelEnabled
+}
+
+// Disable turns off log output.
+func Disable() {
+	filter = filter &^ levelEnabled
+}
+
+var filter = levelEnabled | LevelDebug | levelWarn | LevelError
 
 // ExcludePkgs is a list of (fully-qualifed) package names to be excluded from
 // log output. Any sub-packages will also be excluded.
 var ExcludePkgs = []string{}
 
 // Level represents log levels.
-type Level string
+type Level uint8
 
 const (
-	LevelError Level = "E"
-	LevelDebug Level = "I"
+	levelEnabled Level = 1
+	LevelDebug         = 2
+	levelWarn          = 4
+	LevelError         = 8
+	LevelAll           = 14
 )
 
-// ExcludeLevels is the set of log levels to exclude. By default this is empty.
-var ExcludeLevels = []Level{}
-
-func isExcludedLevel(lvl Level) bool {
-	levels := ExcludeLevels
-	for _, exclude := range levels {
-		if exclude == lvl {
-			return true
-		}
-	}
-	return false
+func (lv Level) binary() string {
+	return fmt.Sprintf("%08b", lv)
 }
+
+// Levels specifies the complete set of log levels to produce output for.
+func Levels(levels ...Level) {
+	Mu.Lock()
+	defer Mu.Unlock()
+
+	// clear the levels
+	filter = filter &^ LevelAll
+	for _, lvl := range levels {
+		// and enable each level
+		filter = filter | lvl
+	}
+}
+
+// ExcludeLevels is the set of log levels to exclude. By default this is empty.
+//var excludeLevels = []Level{}
+//
+//func isExcludedLevel(lvl Level) bool {
+//	levels := excludeLevels
+//	for _, exclude := range levels {
+//		if exclude == lvl {
+//			return true
+//		}
+//	}
+//	return false
+//}
 
 // apacheFormat is the standard apache timestamp format.
 const apacheFormat = `02/Jan/2006:15:04:05 -0700`
@@ -110,7 +143,7 @@ func Fatalf(format string, v ...interface{}) {
 	Mu.Lock()
 	defer Mu.Unlock()
 	msg := fmt.Sprintf(format, v...)
-	if !isExcludedLevel(LevelError) {
+	if allowed(LevelError) {
 		log(true, 1, LevelError, msg)
 
 		if wOut != os.Stdout && wOut != os.Stderr {
@@ -120,8 +153,15 @@ func Fatalf(format string, v ...interface{}) {
 	os.Exit(1)
 }
 
+// allowed returns true if logging is enabled and the specified logging level
+// is allowed.
+func allowed(level Level) bool {
+	return filter&levelEnabled > 0 && filter&level > 0
+}
+
 func log(locked bool, calldepth int, level Level, format string, v ...interface{}) {
-	if !Enabled || isExcludedLevel(level) {
+
+	if !allowed(level) {
 		return
 	}
 
@@ -165,9 +205,17 @@ func log(locked bool, calldepth int, level Level, format string, v ...interface{
 	}
 
 	stamp := t.Format(apacheFormat)
+	var lvlText string
+	switch level {
+	case LevelError:
+		lvlText = "E"
+	default:
+		lvlText = "I"
+	}
+
 	// E [08/Jun/2013:11:28:58 -0700] [ql.go:60] ql.ToSQL: my message text
 	tpl := `%s [%s] [%s:%d:%s] %s`
-	str := fmt.Sprintf(tpl, level, stamp, file, line, fnName, fmt.Sprintf(format, v...))
+	str := fmt.Sprintf(tpl, lvlText, stamp, file, line, fnName, fmt.Sprintf(format, v...))
 	if !locked {
 		Mu.Lock()
 		defer Mu.Unlock()

@@ -19,17 +19,17 @@ func TestFilters(t *testing.T) {
 	assert.Equal(t, 6, countLines(buf))
 
 	buf = useNewLgBuf()
-	lg.ExcludeLevels = []lg.Level{lg.LevelDebug}
+	lg.Levels(lg.LevelDebug)
 	logPackages()
 	assert.Equal(t, 3, countLines(buf))
 
 	buf = useNewLgBuf()
-	lg.ExcludeLevels = []lg.Level{lg.LevelDebug, lg.LevelError}
+	lg.Levels()
 	logPackages()
 	assert.Equal(t, 0, countLines(buf))
 
 	buf = useNewLgBuf()
-	lg.ExcludeLevels = nil
+	lg.Levels(lg.LevelAll)
 	logPackages()
 	assert.Equal(t, 6, countLines(buf), "ExcludeLevels should be reset")
 
@@ -55,17 +55,16 @@ func TestFilters(t *testing.T) {
 
 	buf = useNewLgBuf()
 	lg.ExcludePkgs = nil
-	lg.ExcludeLevels = nil
 	logPackages()
 	assert.Equal(t, 6, countLines(buf), "should have reset all filters")
 
 	buf = useNewLgBuf()
-	lg.Enabled = false
+	lg.Disable()
 	logPackages()
 	assert.Equal(t, 0, countLines(buf), "logging should be entirely disabled")
 
 	buf = useNewLgBuf()
-	lg.Enabled = true
+	lg.Enable()
 	logPackages()
 	assert.Equal(t, 6, countLines(buf), "logging should be re-enabled")
 }
@@ -81,6 +80,7 @@ func useNewLgBuf() *bytes.Buffer {
 }
 
 func logPackages() {
+
 	pkg1.LogDebug()
 	pkg1.LogError()
 	pkg2.LogDebug()
