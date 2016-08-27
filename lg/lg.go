@@ -8,7 +8,8 @@ debugging/tracing purposes. It outputs in Apache httpd error log format.
 
 By default, lg outputs to stdout/stderr, but you can specify an alternative
 destination using lg.Use(). You can use lg.Levels() to specify which log levels
-to produce output for.
+to produce output for; lg.Exclude() to prevent logging for specified packages;
+and lg.Disable() / lg.Enable() to disable/enable logging entirely.
 
 See https://github.com/neilotoole/go-lg for more information.
 */
@@ -23,9 +24,6 @@ import (
 	"sync"
 	"time"
 )
-
-// enabled is the master on/off switch for log output. Default is true.
-var enabled = true
 
 // Enable turns on log output.
 func Enable() {
@@ -133,11 +131,13 @@ func ErrorfN(calldepth int, format string, v ...interface{}) {
 
 // Fatalf is similar to Errorf, but calls os.Exit(1) after logging the message.
 // Additionally, if the log destination is not os.Stdout or os.Stderr, then
-// the message is also printed to os.Stderr.
+// the message is also printed to os.Stderr. This function will invoke os.Exit(1)
+// even if logging is disabled.
 func Fatalf(format string, v ...interface{}) {
 
 	Mu.Lock()
 	defer Mu.Unlock()
+
 	msg := fmt.Sprintf(format, v...)
 	if allowed(LevelError) {
 		log(true, 1, LevelError, msg)
