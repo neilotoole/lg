@@ -32,7 +32,7 @@ import (
 func init() {
 
 	// if the envar is set, then we use that as the default log location.
-	envar := "LG_LOG_FILEPATH"
+	envar := "__LG_LOG_FILEPATH"
 	path, ok := os.LookupEnv(envar)
 	if ok {
 		logFile, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)

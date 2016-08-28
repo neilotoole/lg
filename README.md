@@ -51,9 +51,11 @@ func main() {
 
 ```
 
-Or, even easier, just set the environment variable `LG_LOG_FILEPATH`, either
-in your shell/execution enviornment, or in your app's code near startup, using
-`os.Setenv("LG_LOG_FILEPATH', "/path/to/file.log")`.
+Or, even easier, just set the environment variable `__LG_LOG_FILEPATH` in your
+app's code near startup, using `os.Setenv("__LG_LOG_FILEPATH', "/path/to/file.log")`.
+You can of course map an external envar (`MYAPP_LOG_FILEPATH`) or a flag
+(`--logfile=/path/to/log.file`) onto `__LOG_FILEPATH` if you need the log file
+location to be configurable by the user at runtime.
 
 
 You can control which log levels produce output:
