@@ -2,14 +2,15 @@
 Package lg is a yet another simple logging package, intended primarily for code
 debugging/tracing purposes. It outputs in Apache httpd error log format.
 
-        lg.Debugf("the answer is: %d", 42)
-        // results in
-        I [24/Aug/2016:20:26:41 -0600] [example.go:13:example.MyFunction] the answer is: 42
+	lg.Debugf("the answer is: %d", 42)
+	// results in
+	I [24/Aug/2016:20:26:41 -0600] [example.go:13:example.MyFunction] the answer is: 42
 
 By default, lg outputs to stdout/stderr, but you can specify an alternative
-destination using lg.Use(), or by setting the envar "LG_LOG_FILEPATH" either in
-your shell/execution environment, or somewhere in your app's bootstrap process
-using os.Setenv("LOG_FILE_PATH", "/path/to/file.log").
+destination using lg.Use(), or by setting the envar "__LG_LOG_FILEPATH"
+somewhere in your app's bootstrap process using
+
+	os.Setenv("__LG_LOG_FILE_PATH", "/path/to/file.log").
 
 You can use lg.Levels() to specify which log levels to produce output for;
 lg.Exclude() to prevent logging for specified packages; and lg.Disable() / lg.Enable()
