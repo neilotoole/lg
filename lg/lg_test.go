@@ -5,6 +5,8 @@ import (
 	"strings"
 	"testing"
 
+	"os"
+
 	"github.com/neilotoole/go-lg/lg"
 	"github.com/neilotoole/go-lg/test/filter/pkg1"
 	"github.com/neilotoole/go-lg/test/filter/pkg2"
@@ -87,4 +89,24 @@ func logPackages() {
 	pkg2.LogError()
 	pkg3.LogDebug()
 	pkg3.LogError()
+}
+
+func resetLg() {
+
+	lg.Enable()
+	lg.Excluded = nil
+	lg.Levels(lg.LevelAll)
+	lg.Use(os.Stdout)
+}
+
+func TestDepth(t *testing.T) {
+	resetLg()
+	buf := useNewLgBuf()
+	lg.Debugf("regular debug")
+	assert.True(t, strings.Contains(buf.String(), ":lg_test.TestDepth] regular debug"))
+
+	buf = useNewLgBuf()
+	lg.Depth(1).Debugf("debug with depth")
+	assert.True(t, strings.Contains(buf.String(), ":testing.tRunner] debug with depth"), "should be calling on behalf of ancestor function (testing.tRunner)")
+
 }

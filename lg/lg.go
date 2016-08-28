@@ -110,23 +110,9 @@ func Debugf(format string, v ...interface{}) {
 	log(false, 1, LevelDebug, format, v...)
 }
 
-// DebugfN is similar to Debugf, but it allows the caller to specify additional
-// call depth. This is useful, for example, in situations where a utility function
-// is logging on behalf of its parent function.
-func DebugN(calldepth int, format string, v ...interface{}) {
-	log(false, 1+calldepth, LevelDebug, format, v...)
-}
-
 // Errorf logs an error message.
 func Errorf(format string, v ...interface{}) {
 	log(false, 1, LevelError, format, v...)
-}
-
-// ErrorfN is similar to Errof, but it allows the caller to specify additional
-// call depth. This is useful, for example, in situations where a utility function
-// is logging on behalf of its parent function.
-func ErrorfN(calldepth int, format string, v ...interface{}) {
-	log(false, 1+calldepth, LevelError, format, v...)
 }
 
 // Fatalf is similar to Errorf, but calls os.Exit(1) after logging the message.
@@ -222,4 +208,32 @@ func log(locked bool, calldepth int, level Level, format string, v ...interface{
 		return
 	}
 	fmt.Fprintln(wOut, str)
+}
+
+type Log interface {
+	Debugf(format string, v ...interface{})
+	Errorf(format string, v ...interface{})
+}
+
+type calldepthLogger struct {
+	depth int
+}
+
+// Depth returns a log interface that logs calls as per the package-level Debugf
+// and Errorf function, but using the additional call depth parameter. This is
+// useful, for example, in situations where a utility function is logging on
+// behalf of its parent function.
+//
+//    lg.Depth(1).Errorf("a bad thing happened in my parent: %v", err)
+func Depth(calldepth int) Log {
+	return &calldepthLogger{depth: calldepth}
+}
+
+func (cd *calldepthLogger) Debugf(format string, v ...interface{}) {
+	log(false, 1+cd.depth, LevelDebug, format, v...)
+}
+
+func (cd *calldepthLogger) Errorf(format string, v ...interface{}) {
+	log(false, 1+cd.depth, LevelDebug, format, v...)
+
 }
