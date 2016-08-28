@@ -1,6 +1,6 @@
 # go-lg: golang logging library
 `lg` is yet another golang logging package, primarily intended for debugging/tracing purposes. 
-It outputs in Apache httpd `error_log` format. To make it easy to debug, it logs the the
+It outputs in *Apache httpd* `error_log` format. To make it easy to debug, it logs the the
 invoking file name, line number, and function name.
 
 To get the library: `go get github.com/neilotoole/go-lg/lg`
@@ -57,6 +57,8 @@ You can control which log levels produce output:
 lg.Levels(lg.LevelError) // only output error
 lg.Levels() // output no levels, aka disable logging
 ```
+
+You can also use the master on/off switches: `lg.Enable()` and `lg.Disable()`.
 
 If you want to output the full file path or full function name, set these variables:
 

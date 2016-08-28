@@ -105,7 +105,7 @@ func Use(dest io.Writer) {
 	wErr = dest
 }
 
-// Debugf logs an information message.
+// Debugf logs a debug message.
 func Debugf(format string, v ...interface{}) {
 	log(false, 1, LevelDebug, format, v...)
 }
@@ -210,13 +210,10 @@ func log(locked bool, calldepth int, level Level, format string, v ...interface{
 	fmt.Fprintln(wOut, str)
 }
 
+// Log is the logging interface.
 type Log interface {
 	Debugf(format string, v ...interface{})
 	Errorf(format string, v ...interface{})
-}
-
-type calldepthLogger struct {
-	depth int
 }
 
 // Depth returns a log interface that logs calls as per the package-level Debugf
@@ -229,10 +226,16 @@ func Depth(calldepth int) Log {
 	return &calldepthLogger{depth: calldepth}
 }
 
+type calldepthLogger struct {
+	depth int
+}
+
+// Debugf logs a debug message.
 func (cd *calldepthLogger) Debugf(format string, v ...interface{}) {
 	log(false, 1+cd.depth, LevelDebug, format, v...)
 }
 
+// Errorf logs an error message.
 func (cd *calldepthLogger) Errorf(format string, v ...interface{}) {
 	log(false, 1+cd.depth, LevelDebug, format, v...)
 

@@ -1,6 +1,5 @@
 package pkg1
 
-
 import "github.com/neilotoole/go-lg/lg"
 
 func LogDebug() {
