@@ -7,9 +7,13 @@ debugging/tracing purposes. It outputs in Apache httpd error log format.
         I [24/Aug/2016:20:26:41 -0600] [example.go:13:example.MyFunction] the answer is: 42
 
 By default, lg outputs to stdout/stderr, but you can specify an alternative
-destination using lg.Use(). You can use lg.Levels() to specify which log levels
-to produce output for; lg.Exclude() to prevent logging for specified packages;
-and lg.Disable() / lg.Enable() to disable/enable logging entirely.
+destination using lg.Use(), or by setting the envar "LG_LOG_FILEPATH" either in
+your shell/execution environment, or somewhere in your app's bootstrap process
+using os.Setenv("LOG_FILE_PATH", "/path/to/file.log").
+
+You can use lg.Levels() to specify which log levels to produce output for;
+lg.Exclude() to prevent logging for specified packages; and lg.Disable() / lg.Enable()
+to disable/enable logging entirely.
 
 See https://github.com/neilotoole/go-lg for more information.
 */
@@ -24,6 +28,21 @@ import (
 	"sync"
 	"time"
 )
+
+func init() {
+
+	// if the envar is set, then we use that as the default log location.
+	envar := "LG_LOG_FILEPATH"
+	path, ok := os.LookupEnv(envar)
+	if ok {
+		logFile, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, fmt.Sprintf("Error: unable to initialize log file: %v", err))
+			os.Exit(1)
+		}
+		Use(logFile)
+	}
+}
 
 // Enable turns on log output.
 func Enable() {
