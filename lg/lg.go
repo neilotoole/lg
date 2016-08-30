@@ -56,7 +56,7 @@ func Disable() {
 	filter = filter &^ levelEnabled
 }
 
-var filter = levelEnabled | LevelDebug | levelWarn | LevelError
+var filter = levelEnabled | LevelDebug | LevelWarn | LevelError
 
 // Excluded is a list of (fully-qualified) package names to be excluded from
 // log output. Any sub-packages will also be excluded.
@@ -77,7 +77,7 @@ type Level uint8
 const (
 	levelEnabled Level = 1
 	LevelDebug         = 2
-	levelWarn          = 4
+	LevelWarn          = 4
 	LevelError         = 8
 	LevelAll           = 14
 )
@@ -127,6 +127,11 @@ func Use(dest io.Writer) {
 
 // Debugf logs a debug message.
 func Debugf(format string, v ...interface{}) {
+	log(false, 1, LevelDebug, format, v...)
+}
+
+// Warnf logs a warning message.
+func Warnf(format string, v ...interface{}) {
 	log(false, 1, LevelDebug, format, v...)
 }
 
@@ -211,6 +216,8 @@ func log(locked bool, calldepth int, level Level, format string, v ...interface{
 	switch level {
 	case LevelError:
 		lvlText = "E"
+	case LevelWarn:
+		lvlText = "W"
 	default:
 		lvlText = "I"
 	}
@@ -233,6 +240,7 @@ func log(locked bool, calldepth int, level Level, format string, v ...interface{
 // Log is the logging interface.
 type Log interface {
 	Debugf(format string, v ...interface{})
+	Warnf(format string, v ...interface{})
 	Errorf(format string, v ...interface{})
 }
 
@@ -253,6 +261,11 @@ type calldepthLogger struct {
 // Debugf logs a debug message.
 func (cd *calldepthLogger) Debugf(format string, v ...interface{}) {
 	log(false, 1+cd.depth, LevelDebug, format, v...)
+}
+
+// Warnf logs a debug message.
+func (cd *calldepthLogger) Warnf(format string, v ...interface{}) {
+	log(false, 1+cd.depth, LevelWarn, format, v...)
 }
 
 // Errorf logs an error message.

@@ -18,12 +18,12 @@ func TestFilters(t *testing.T) {
 
 	buf := useNewLgBuf()
 	logPackages()
-	assert.Equal(t, 6, countLines(buf))
+	assert.Equal(t, 9, countLines(buf))
 
 	buf = useNewLgBuf()
 	lg.Levels(lg.LevelDebug)
 	logPackages()
-	assert.Equal(t, 3, countLines(buf))
+	assert.Equal(t, 6, countLines(buf))
 
 	buf = useNewLgBuf()
 	lg.Levels()
@@ -33,17 +33,17 @@ func TestFilters(t *testing.T) {
 	buf = useNewLgBuf()
 	lg.Levels(lg.LevelAll)
 	logPackages()
-	assert.Equal(t, 6, countLines(buf), "levels should be reset to all")
+	assert.Equal(t, 9, countLines(buf), "levels should be reset to all")
 
 	buf = useNewLgBuf()
 	lg.Exclude("github.com/neilotoole/go-lg/test/filter/pkg1")
 	logPackages()
-	assert.Equal(t, 4, countLines(buf))
+	assert.Equal(t, 6, countLines(buf))
 
 	buf = useNewLgBuf()
 	lg.Exclude("github.com/neilotoole/go-lg/test/filter/pkg1", "github.com/neilotoole/go-lg/test/filter/pkg2")
 	logPackages()
-	assert.Equal(t, 2, countLines(buf))
+	assert.Equal(t, 3, countLines(buf))
 
 	buf = useNewLgBuf()
 	lg.Exclude("github.com/neilotoole/go-lg/test/filter/pkg1", "github.com/neilotoole/go-lg/test/filter/pkg2", "github.com/neilotoole/go-lg/test/filter/pkg3")
@@ -58,7 +58,7 @@ func TestFilters(t *testing.T) {
 	buf = useNewLgBuf()
 	lg.Excluded = nil
 	logPackages()
-	assert.Equal(t, 6, countLines(buf), "should have reset all pkg filters")
+	assert.Equal(t, 9, countLines(buf), "should have reset all pkg filters")
 
 	buf = useNewLgBuf()
 	lg.Disable()
@@ -68,7 +68,7 @@ func TestFilters(t *testing.T) {
 	buf = useNewLgBuf()
 	lg.Enable()
 	logPackages()
-	assert.Equal(t, 6, countLines(buf), "logging should be re-enabled")
+	assert.Equal(t, 9, countLines(buf), "logging should be re-enabled")
 }
 
 func countLines(buf *bytes.Buffer) int {
@@ -84,10 +84,15 @@ func useNewLgBuf() *bytes.Buffer {
 func logPackages() {
 
 	pkg1.LogDebug()
+	pkg1.LogWarn()
 	pkg1.LogError()
+
 	pkg2.LogDebug()
+	pkg2.LogWarn()
 	pkg2.LogError()
+
 	pkg3.LogDebug()
+	pkg3.LogWarn()
 	pkg3.LogError()
 }
 
