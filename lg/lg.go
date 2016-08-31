@@ -140,7 +140,7 @@ func Debugf(format string, v ...interface{}) {
 
 // Warnf logs a warning message.
 func Warnf(format string, v ...interface{}) {
-	log(false, 1, LevelDebug, format, v...)
+	log(false, 1, LevelWarn, format, v...)
 }
 
 // Errorf logs an error message.
