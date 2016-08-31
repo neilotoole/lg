@@ -278,6 +278,6 @@ func (cd *calldepthLogger) Warnf(format string, v ...interface{}) {
 
 // Errorf logs an error message.
 func (cd *calldepthLogger) Errorf(format string, v ...interface{}) {
-	log(false, 1+cd.depth, LevelDebug, format, v...)
+	log(false, 1+cd.depth, LevelError, format, v...)
 
 }
