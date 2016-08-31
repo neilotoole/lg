@@ -24,6 +24,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"sync"
@@ -36,10 +37,17 @@ func init() {
 	envar := "__LG_LOG_FILEPATH"
 	path, ok := os.LookupEnv(envar)
 	if ok {
+		parent := filepath.Dir(path)
+		err := os.MkdirAll(parent, os.ModePerm)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, fmt.Sprintf("Error: logging disabled: unable to create parent dir for log file path %q: %v", path, err))
+			return
+		}
+
 		logFile, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, fmt.Sprintf("Error: unable to initialize log file: %v", err))
-			os.Exit(1)
+			fmt.Fprintf(os.Stderr, fmt.Sprintf("Error: logging disabled: unable to initialize log file %q: %v", path, err))
+			return
 		}
 		Use(logFile)
 	}
