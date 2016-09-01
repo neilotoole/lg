@@ -23,7 +23,7 @@ func TestFilters(t *testing.T) {
 	buf = useNewLgBuf()
 	lg.Levels(lg.LevelDebug)
 	logPackages()
-	assert.Equal(t, 6, countLines(buf))
+	assert.Equal(t, 5, countLines(buf))
 
 	buf = useNewLgBuf()
 	lg.Levels()

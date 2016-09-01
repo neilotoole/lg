@@ -23,6 +23,7 @@ package lg
 import (
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -37,6 +38,12 @@ func init() {
 	envar := "__LG_LOG_FILEPATH"
 	path, ok := os.LookupEnv(envar)
 	if ok {
+
+		if path == "/dev/null" {
+			Use(ioutil.Discard)
+			return
+		}
+
 		parent := filepath.Dir(path)
 		err := os.MkdirAll(parent, os.ModePerm)
 		if err != nil {
