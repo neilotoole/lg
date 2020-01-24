@@ -1,6 +1,6 @@
 # neilotoole/lg
 
-`lg` is an exploration of a minimal, leveled,
+`lg` is an exploration of a small, leveled,
 unstructured logging interface for enterprise applications.
 It is not suggested for production use.
 
@@ -67,16 +67,16 @@ provides convenience methods for this scenario.
 
 Additionally, `lg` demonstrates the separation of a logging interface
 from concrete implementations. Note that `lg` itself doesn't perform rendering
-of log entries: this is left to a backing log library.
-Implementations can be found in `lg/loglg`,
-`lg/zaplg` and `lg/testlg`. The `testlg` impl is used in conjunction with
-Go's testing framework. If using `zap`, `testlg` has [benefits](#zaptest) over `zaptest`.
+of log entries: this is left to a backing log library. Implementations can be
+found in `lg/loglg`,`lg/zaplg` and `lg/testlg`. The `testlg` impl is used in
+conjunction with Go's testing framework. If using `zap`, `testlg` has 
+[benefits](#zaptest) over `zaptest`.
 
 `lg` does not address structured logging, the virtues of which are outside scope.
 
 ## `WarnIf` methods
 In addition to the basic `Debugf`, `Warnf`, and `Errorf` methods, the `Log` interface
- defines methods `WarnIfError`, `WarnIfFuncError`, and `WarnIfCloseError`.
+defines methods `WarnIfError`, `WarnIfFuncError`, and `WarnIfCloseError`.
 
 > **TLDR**
 >
@@ -97,7 +97,7 @@ In addition to the basic `Debugf`, `Warnf`, and `Errorf` methods, the `Log` inte
 >  }()
 > ```
 
-We'll work our way through the origin story of the `WarnIf` methods. 
+We'll use examples to work our way through the origin story of the `WarnIf` methods. 
 
 ### `BusinessOperationV1`
 
@@ -250,7 +250,7 @@ func BusinessOperationV4(log lg.Log) (receipt string, err error) {
   // rest of function omitted 
 ```	
 
-As a variation when the `dataSource` can be nil, we could use `WarnIfCloseError`:
+As a variation when the `dataSource` can be `nil`, we could use `WarnIfCloseError`:
 
 ```go
 // WarnIfCloseError is no-op if c is nil; if c is non-nil,
@@ -272,6 +272,7 @@ defer log.WarnIfCloseError(dataSource)
 ```
 
 ## `testlg` adapter for `testing`
+
 Package `testlg` provides a `lg.Log` implementation that can output its
 log entries to `testing.T`. This test:
 
@@ -296,7 +297,7 @@ outputs:
 
 ### <a name="zaptest"></a> Prefer `testlg` to `zaptest`
 
-If you're using Uber's `zap` as your logging impl, you'll have noticed that
+If you're using Uber's [`zap`](https://github.com/uber-go/zap) as your logging impl, you'll have noticed that
 pkg `zaptest` provides an adapter for use with `testing`.
 Alas, `zaptest` has one ugly drawback: it causes `testing` to
 output incorrect caller information. The test output from  [`TestZapTestVsTestLg`](zaplg/zaplg_test.go#L45) demonstrates the issue (edited for brevity):

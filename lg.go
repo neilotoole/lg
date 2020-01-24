@@ -1,4 +1,4 @@
-// Package lg is an exploration of a minimal, leveled,
+// Package lg is an exploration of a small, leveled,
 // unstructured logging interface for enterprise developers.
 // It is not suggested for production use.
 //

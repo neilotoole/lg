@@ -21,6 +21,7 @@ func TestNew(t *testing.T) {
 	log := zaplg.New()
 	logItAll(log)
 }
+
 func TestNewWith_Caller(t *testing.T) {
 	log := zaplg.NewWith(os.Stdout, "text", true, true, true, 0)
 	logItAll(log)
