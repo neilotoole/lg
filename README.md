@@ -1,4 +1,4 @@
-# neilotoole/lg: enterprise logger exploration
+# `neilotoole/lg`: logging exploration
 
 `lg` is an exploration of a minimal, leveled,
 unstructured logging interface for enterprise developers.
@@ -109,18 +109,18 @@ Let's start with this function:
 // BusinessOperationV1 closes dataSource via defer, but does ignores
 // any error from Close.
 func BusinessOperationV1(log lg.Log) (receipt string, err error) {
-	dataSource, err := OpenBizData()
-	if err != nil {
-		return "", err
-	}
-	defer dataSource.Close() // Ignores any error from Close
+  dataSource, err := OpenBizData()
+  if err != nil {
+    return "", err
+  }
+  defer dataSource.Close() // Ignores any error from Close
 
-	data, err := ioutil.ReadAll(dataSource)
-	if err != nil {
-		return "", err
-	}
+  data, err := ioutil.ReadAll(dataSource)
+  if err != nil {
+    return "", err
+  }
 
-	return ExternalAPICall(data) // e.g. book a flight
+  return ExternalAPICall(data) // e.g. book a flight
 }
 ```
 
@@ -169,18 +169,18 @@ func BusinessOperationV2(log lg.Log) (receipt string, err error) {
 This achieves our goals. The `Close` error is logged at `WARN` level. We could call it a wrap here and go home. However, there's no question that this:
 
 ```go
-  defer func() {
-    err := dataSource.Close()
-    if err != nil {
-      log.Warnf(err.Error())
-    }
-  }()
+defer func() {
+  err := dataSource.Close()
+  if err != nil {
+    log.Warnf(err.Error())
+  }
+}()
 ```
 
 is less pleasant to read than:
 
 ```go
-  defer dataSource.Close()
+defer dataSource.Close()
 ```
 
 We can do better.
@@ -216,7 +216,7 @@ That `defer` looks significantly cleaner now. We could even
 write it on one line:
 
 ```go
-  defer func() { log.WarnIfError(dataSource.Close()) }()
+defer func() { log.WarnIfError(dataSource.Close()) }()
 ```
 
 
@@ -292,7 +292,8 @@ outputs:
 If you're using Uber's `zap` as your logging impl, you'll have noticed that
 pkg `zaptest` provides an adapter for use with `testing`.
 Alas, `zaptest` has one ugly drawback: it causes `testing` to
-output incorrect caller information. The test output from  `TestZapTestVsTestLg` (in `lg/zaplg/zaplg_test.go`) demonstrates the issue (edited for brevity):
+output incorrect caller information. The test output from  [`TestZapTestVsTestLg`](zaplg/zaplg_test.go#L45) demonstrates the issue (edited for brevity):
+
 
 ```
 === RUN   TestZapTestVsTestLg
