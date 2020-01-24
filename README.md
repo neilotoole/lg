@@ -1,87 +1,312 @@
-# go-lg: golang logging library
-`lg` is yet another golang logging package, primarily intended for debugging/tracing purposes. 
-It outputs in *Apache httpd* `error_log` format. To make it easy to debug, it logs the the
-invoking file name, line number, and function name.
+# neilotoole/lg: enterprise logger exploration
 
-To get the library: `go get github.com/neilotoole/go-lg/lg`
+`lg` is an exploration of a minimal, leveled,
+unstructured logging interface for enterprise developers.
+It is not suggested for production use.
 
-Here's how you use it:
+## TLDR
 
-```go
-package example
+Log levels `ERROR`, `WARN` and `DEBUG` are appropriate for enterprise development.
 
-import "github.com/neilotoole/go-lg/lg"
-
-func ShowMe() {
-        lg.Debugf("the answer is: %d", 42)
-        lg.Errorf("trouble ahead")
-}
-```
-That produces:
-
-```
-I [24/Aug/2016:20:26:41 -0600] [example.go:6:example.ShowMe] the answer is: 42
-E [24/Aug/2016:20:26:41 -0600] [example.go:7:example.ShowMe] trouble ahead
-```
-
-By default, `lg` outputs to `stdout`/`stderr`, but you can specify an alternative
-destination with `lg.Use()`. Typically this is a log file, and your code might
-look something like this:
+Use this idiom with `io.Closer`:
 
 ```go
-package main
+func DoSomething(log lg.Log) error {
+  f, err := os.Open("filename")
+  if err != nil {
+    return err
+  }
+  defer log.WarnIfFnError(f.Close)
+```
 
-import (
-	"os"
-	"github.com/neilotoole/go-lg/lg"
-)
+## Installation
 
-func init() {
-	logFile, err := os.OpenFile("/path/to/file.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+`go get -u github.com/neilotoole/lg`
+
+## Quick Start
+
+```go
+// Using default stdlib log adapter
+log := loglg.New()
+
+// Or using uber/zap adapter with options
+log = zaplg.NewWith(os.Stdout, "json", true, 0)
+
+log.Debugf("debug msg")
+log.Warnf("warning msg")
+log.Errorf("error msg: %v", err)
+
+log.WarnIfError(f.Close())
+
+// WarnIfFnError typically used with defer
+defer log.WarnIfFnError(f.Close)
+
+```
+
+## Overview
+
+Contra [Cheney](https://dave.cheney.net/2015/11/05/lets-talk-about-logging), `lg`'s
+primary thesis is that three log levels are appropriate for many 
+enterprise applications, and that these levels
+should be `ERROR`, `WARN`, and `DEBUG`.
+
+- `ERROR`: a business operation failed, and the user experienced it.
+We've lost actual dollars because of this thing. Ops needs to look at it immediately.
+- `WARN`: the business operation didn't fail, but something fishy happened
+that should be diagnosed before it does start costing us money. Ops needs
+to look at it eventually, possibly passing it on to dev.
+- `DEBUG`: for developers, for after-the-fact diagnosis of problems. Sometimes `DEBUG` logs are the only practical way for devs to sherlock the disaster that occurred at our primary customer's installation, which of course cannot be recreated in tests because Mephisto himself couldn't conjure this excuse for a production environment.
+
+This exploration examines a specific issue in detail: how to handle an `io.Closer`
+error after the main business operation has succeeded. The conclusion
+is that this errors is best logged at `WARN` level. The `lg.Log` interface
+provides convenience methods for this scenario.
+
+Additionally, `lg` demonstrates the separation of a logging interface
+from concrete implementations. Note that `lg` itself doesn't perform rendering
+of log entries: this is left to a backing log library.
+Implementations can be found in `lg/loglg`,
+`lg/zaplg` and `lg/testlg`. The `testlg` impl is used in conjunction with
+Go's testing framework. If using `zap`, `testlg` has [benefits](#zaptest) over `zaptest`.
+
+`lg` does not address structured logging, the virtues of which are outside scope.
+
+## `WarnIfError` and `WarnIfFnError`
+
+In addition to the basic `Debugf`, `Warnf`, and `Errorf` methods
+(matching `Debug`, `Warn` and `Error` methods are omitted for
+brevity), the `Log` interface defines methods `WarnIfError` and
+`WarnIfFnError`.
+
+> **TLDR:** Do this:
+> 
+> ```go
+>   defer log.WarnIfFnError(dataSource.Close)
+> ```
+> 
+> Not this:
+> 
+> ```go
+  defer func() {
+    err := dataSource.Close()
+    if err != nil {
+      log.Warnf(err.Error())
+    }
+  }()
+```
+> 
+
+
+
+The following code snippets are lifted from `example_test.go`. 
+
+
+### `BusinessOperationV1`
+
+Let's start with this function:
+
+```go
+// BusinessOperationV1 performs a business operation against
+// an external API. If the business operation fails, a non-nil
+// error is returned. If the business operation succeeds,
+// a non-empty transaction receipt is returned.
+// BusinessOperationV1 closes dataSource via defer, but does ignores
+// any error from Close.
+func BusinessOperationV1(log lg.Log) (receipt string, err error) {
+	dataSource, err := OpenBizData()
 	if err != nil {
-		panic(err)
+		return "", err
 	}
-	lg.Use(logFile)
-}
+	defer dataSource.Close() // Ignores any error from Close
 
-func main() {
-	lg.Debugf("Hello world!")
-	// do something useful
-}
+	data, err := ioutil.ReadAll(dataSource)
+	if err != nil {
+		return "", err
+	}
 
+	return ExternalAPICall(data) // e.g. book a flight
+}
 ```
 
-Or, even easier, just set the environment variable `__LG_LOG_FILEPATH` in your
-app's code near startup, using `os.Setenv("__LG_LOG_FILEPATH', "/path/to/file.log")`.
-You can of course map an external envar (`MYAPP_LOG_FILEPATH`) or a flag
-(`--logfile=/path/to/log.file`) onto `__LOG_FILEPATH` if you need the log file
-location to be configurable by the user at runtime.
+The function calls `OpenBizData` which returns an `io.ReadCloser` (could be a file for example), reads data, and then invokes an external API, e.g. to book a flight. The `ExternalAPICall` function returns a transaction receipt or error, which `BusinessOperationV1` returns.
 
+We're concerned with the line `defer dataSource.Close()`.
 
-You can control which log levels produce output:
+Although the `Close` method returns an error, it is not checked. Nothing is done with it. Now, being that all the data has already been read from `dataSource`, it is unlikely that the `Close` method will fail, but it could. What to do with a `Close` error? Assume that `ExternalAPICall` has succeeded, and `BusinessOperationV1` can return the transaction receipt to the caller. Should `BusinessOperationV1` return an error and no receipt?
+
+A common judgment is that if the business operation succeeded, the error on `Close` is not worth failing the entire operation for. Plus, then we'd be in the position of potentially having to roll back the effect of `ExternalAPICall`, which simply may not be possible.
+
+We could return the successful receipt and the `Close` error, but that's counter to the Go idiom that if an error is returned, the other return items should be the zero value.
+
+In many cases, the usual handling is simply not to check the `Close` error. And `defer dataSource.Close()` reads nicely. But this error should not be ignored. It is symptomatic of some underlying issue, and it should be investigated, even it's not causing a business operations to fail (yet).
+
+A quick reminder of how `lg` chooses to define log levels:
+
+- `ERROR`: a business operation failed.
+- `WARN`: the business operation succeeded, but something worrying happened.
+- `DEBUG`: for devs, for after-the-fact diagnosis of problems.
+
+This `Close` error seems an ideal candidate to log at `WARN` level.
+
+### `BusinessOperationV2`
+
+This is the next iteration of our function:
 
 ```go
-lg.Levels(lg.LevelError) // only output error
-lg.Levels() // output no levels, aka disable logging
+// BusinessOperationV2 closes dataSource in a defer, and logs at WARN level
+// if an error results from Close.
+func BusinessOperationV2(log lg.Log) (receipt string, err error) {
+  dataSource, err := OpenBizData()
+  if err != nil {
+    return "", err
+  }
+  defer func() {
+    err := dataSource.Close()
+    if err != nil {
+      log.Warnf(err.Error())
+    }
+  }()
+    
+  // rest of function omitted 
 ```
 
-You can also use the master on/off switches: `lg.Enable()` and `lg.Disable()`.
-
-If you want to output the full file path or full function name, set these variables:
+This achieves our goals. The `Close` error is logged at `WARN` level. We could call it a wrap here and go home. However, there's no question that this:
 
 ```go
-lg.LongFnName = true
-lg.LongFilePath = true
-````
-
-You'll get crazy long output like this:
-
-```
-I [24/Aug/2016:20:34:02 -0600] [/Users/neilotoole/nd/go/src/github.com/neilotoole/go-lg/example/example.go:6:github.com/neilotoole/go-lg/example/example.ShowMe] the answer is: 42
+  defer func() {
+    err := dataSource.Close()
+    if err != nil {
+      log.Warnf(err.Error())
+    }
+  }()
 ```
 
-Note that `lg` only actually outputs two Apache log levels: `INFO` and `ERROR`.
-The `Debug` functions map to `INFO`, and the other functions map to `ERROR`. This
-is somewhat in the spirit of Dave Cheney's [logging article](http://dave.cheney.net/2015/11/05/lets-talk-about-logging).
-But the Apache `error_log` format doesn't have a `DEBUG` level, and `WARN` is a little useless,
-so this is where we're at.
+is less pleasant to read than:
+
+```go
+  defer dataSource.Close()
+```
+
+We can do better.
+
+### `BusinessOperationV3`
+
+In `BusinessOperationV3`, we make the `defer` tidier by using `Log.WarnIfError`.
+
+```go
+  // WarnIfError is no-op if err is nil; if non-nil, err
+  // is logged at WARN level.
+  WarnIfError(err error)
+```
+
+Here's how it looks:
+
+```go
+// BusinessOperationV3 uses WarnIfError to make the defer statement
+// more succinct.
+func BusinessOperationV3(log lg.Log) (receipt string, err error) {
+  dataSource, err := OpenBizData()
+  if err != nil {
+    return "", err
+  }
+  defer func() {
+    log.WarnIfError(dataSource.Close())
+  }()
+
+  // rest of function omitted   
+```
+
+That `defer` looks significantly cleaner now. We could even
+write it on one line:
+
+```go
+  defer func() { log.WarnIfError(dataSource.Close()) }()
+```
+
+
+### `BusinessOperationV4`
+
+But we can get cleaner yet. Here's `Log.WarnIfFnError`:
+
+```go
+  // WarnIfFnError is no-op if fn is nil; if fn is non-nil,
+  // fn is executed and if fn's error is non-nil, that error
+  // is logged at WARN level.
+  WarnIfFnError(fn func() error)
+```
+
+In practice, this reads nicely:
+
+```go
+// BusinessOperationV4 uses WarnIfFnError to make the defer statement
+// yet more succinct.
+func BusinessOperationV4(log lg.Log) (receipt string, err error) {
+  dataSource, err := OpenBizData()
+  if err != nil {
+    return "", err
+  }
+  defer log.WarnIfFnError(dataSource.Close)
+  
+  // rest of function omitted 
+```	
+
+As a variation, we could add a method like this to `Log`:
+
+```go
+  // WarnIfCloserError is no-op if c is nil; if c is non-nil,
+  // c.Close is executed and if Close's error is non-nil,
+  // that error is logged at WARN level.
+  WarnIfCloserError(c io.Closer)
+```	
+
+And invoke like so:
+
+```go
+  defer log.WarnIfCloserError(dataSource)
+```
+
+`WarnIfCloserError` has the benefit that the `Closer` arg can be `nil`, but I'm not yet persuaded that it's useful enough to incorporate into `Log`.
+
+
+## `testlg` adapter for `testing`
+Package `testlg` provides a `lg.Log` implementation that can output its
+log entries to `testing.T`. This test:
+
+```go
+func TestNew(t *testing.T) {
+  log := testlg.New(t)
+  log.Debugf("hello")
+  log.Warnf("hola")
+  log.Errorf("jambo")
+}
+```
+
+outputs:
+
+```
+=== RUN   TestNew
+--- PASS: TestNew (0.00s)
+    testlg_test.go:22: 22:12:15.668336 DEBUG  hello
+    testlg_test.go:23: 22:12:15.668469 WARN   hola
+    testlg_test.go:24: 22:12:15.668474 ERROR  jambo
+```
+
+### <a name="zaptest"></a> Prefer `testlg` to `zaptest`
+
+If you're using Uber's `zap` as your logging impl, you'll have noticed that
+pkg `zaptest` provides an adapter for use with `testing`.
+Alas, `zaptest` has one ugly drawback: it causes `testing` to
+output incorrect caller information. The test output from  `TestZapTestVsTestLg` (in `lg/zaplg/zaplg_test.go`) demonstrates the issue (edited for brevity):
+
+```
+=== RUN   TestZapTestVsTestLg
+--- PASS: TestZapTestVsTestLg (0.00s)
+    zaplg_test.go:68: zaptest -- Observe the clashing caller info reported by the testing framework (misleading) vs zap itself (desired)
+    logger.go:130:  DEBUG  zaplg/zaplg_test.go:70  misleading caller info
+    zaplg_test.go:74: testlg -- Observe the concurring caller info reported by the testing framework and zap itself
+    zaplg_test.go:79:  DEBUG  zaplg/zaplg_test.go:79  accurate caller info
+```
+
+Note `line 4`, where `testing` reports `logger.go:130` as the caller, while zap itself
+reports the correct caller (`zaplg/zaplg_test.go:70`). In contrast, `testlg` causes `testing`
+to accurately report the caller.
