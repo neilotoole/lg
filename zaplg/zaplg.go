@@ -18,21 +18,22 @@ import (
 const textFormat = "text"
 
 // New returns a Log that writes to os.Stdout
-// in text format, reporting the caller.
+// in text format, reporting the timestamp, level, and caller.
 func New() *Log {
-	return NewWith(os.Stdout, textFormat, true, true, 0)
+	return NewWith(os.Stdout, textFormat, true, true, true, 0)
 }
 
 // NewWith returns a Log that writes to w. Format should be one
-// of "json" or "text"; defaults to "json". If caller is true
-// the call site is logged. The addCallerSkip param is used to
-// to adjust the frame reported as the caller.
+// of "json" or "text"; defaults to "text". The timestamp, level
+// and caller params determine if those fields are reported.
+// The addCallerSkip param is used to to adjust the frame
+// reported as the caller.
 //
 // Use NewWithZap if more control over output options is desired.
-func NewWith(w io.Writer, format string, timestamp, caller bool, addCallerSkip int) *Log {
+func NewWith(w io.Writer, format string, timestamp, level, caller bool, addCallerSkip int) *Log {
 	encoderCfg := zapcore.EncoderConfig{
-		MessageKey:     "msg",
-		LevelKey:       "level",
+		MessageKey: "msg",
+
 		EncodeDuration: zapcore.StringDurationEncoder,
 	}
 
@@ -44,6 +45,10 @@ func NewWith(w io.Writer, format string, timestamp, caller bool, addCallerSkip i
 	if timestamp {
 		encoderCfg.TimeKey = "time"
 		encoderCfg.EncodeTime = timeEncoder
+	}
+
+	if level {
+		encoderCfg.LevelKey = "level"
 	}
 
 	term := isTerminal(w)
@@ -60,14 +65,14 @@ func NewWith(w io.Writer, format string, timestamp, caller bool, addCallerSkip i
 	}
 
 	writeSyncer := zapcore.AddSync(w)
-	level := zap.NewAtomicLevelAt(zap.DebugLevel)
+	zLevel := zap.NewAtomicLevelAt(zap.DebugLevel)
 	var core zapcore.Core
 
 	switch format {
-	case textFormat:
-		core = zapcore.NewCore(zapcore.NewConsoleEncoder(encoderCfg), writeSyncer, level)
-	default: // case json
-		core = zapcore.NewCore(zapcore.NewJSONEncoder(encoderCfg), writeSyncer, level)
+	case "json":
+		core = zapcore.NewCore(zapcore.NewJSONEncoder(encoderCfg), writeSyncer, zLevel)
+	default: // case text
+		core = zapcore.NewCore(zapcore.NewConsoleEncoder(encoderCfg), writeSyncer, zLevel)
 	}
 
 	logger := zap.New(core)
@@ -100,7 +105,7 @@ func (l *Log) WarnIfError(err error) {
 	logger.Warn(err.Error())
 }
 
-func (l *Log) WarnIfFnError(fn func() error) {
+func (l *Log) WarnIfFuncError(fn func() error) {
 	if fn == nil {
 		return
 	}
@@ -128,8 +133,7 @@ func (l *Log) WarnIfCloseError(c io.Closer) {
 	logger.Warn(err.Error())
 }
 
-// isTerminal returns true if w is a terminal. Currently
-// always returns false for windows.
+// isTerminal returns true if w is a terminal.
 func isTerminal(w io.Writer) bool {
 	switch v := w.(type) {
 	case *os.File:
@@ -146,5 +150,5 @@ func timeEncoder(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
 // TestingFactoryFn can be passed to testlg.NewWith to
 // use zap as the backing impl.
 var TestingFactoryFn = func(w io.Writer) lg.Log {
-	return NewWith(w, "text", true, false, 0)
+	return NewWith(w, "text", true, true, false, 0)
 }

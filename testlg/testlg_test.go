@@ -37,7 +37,7 @@ func TestFactoryFn(t *testing.T) {
 	defer func() { testlg.FactoryFn = prevFn }()
 
 	testlg.FactoryFn = func(w io.Writer) lg.Log {
-		return zaplg.NewWith(w, "text", true, true, 1)
+		return zaplg.NewWith(w, "text", true, true, true, 1)
 	}
 
 	t.Log("Switching to new testlg.FactoryFn")
@@ -57,9 +57,9 @@ func logItAll(log lg.Log) {
 	log.WarnIfError(nil)
 	log.WarnIfError(errors.New("error: WarnIfError msg"))
 
-	log.WarnIfFnError(nil)
-	log.WarnIfFnError(func() error { return nil })
-	log.WarnIfFnError(func() error { return errors.New("error: WarnIfFnError msg") })
+	log.WarnIfFuncError(nil)
+	log.WarnIfFuncError(func() error { return nil })
+	log.WarnIfFuncError(func() error { return errors.New("error: WarnIfFuncError msg") })
 
 	log.WarnIfCloseError(nil)
 	log.WarnIfCloseError(errCloser{})

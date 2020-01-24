@@ -34,7 +34,7 @@ func TestOutput(t *testing.T) {
 		{"loglg_test.go:", "ERROR", "Error msg"},
 		{"loglg_test.go:", "ERROR", "Errorf msg"},
 		{"loglg_test.go:", "WARN", "WarnIfError msg"},
-		{"loglg_test.go:", "WARN", "WarnIfFnError msg"},
+		{"loglg_test.go:", "WARN", "WarnIfFuncError msg"},
 		{"loglg_test.go:", "WARN", "WarnIfCloseError msg"},
 	}
 
@@ -96,9 +96,9 @@ func logItAll(log lg.Log) {
 	log.WarnIfError(nil)
 	log.WarnIfError(errors.New("error: WarnIfError msg"))
 
-	log.WarnIfFnError(nil)
-	log.WarnIfFnError(func() error { return nil })
-	log.WarnIfFnError(func() error { return errors.New("error: WarnIfFnError msg") })
+	log.WarnIfFuncError(nil)
+	log.WarnIfFuncError(func() error { return nil })
+	log.WarnIfFuncError(func() error { return errors.New("error: WarnIfFuncError msg") })
 
 	log.WarnIfCloseError(nil)
 	log.WarnIfCloseError(errCloser{})

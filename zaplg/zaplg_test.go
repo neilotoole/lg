@@ -22,12 +22,12 @@ func TestNew(t *testing.T) {
 	logItAll(log)
 }
 func TestNewWith_Caller(t *testing.T) {
-	log := zaplg.NewWith(os.Stdout, "text", true, true, 0)
+	log := zaplg.NewWith(os.Stdout, "text", true, true, true, 0)
 	logItAll(log)
 }
 
 func TestNewWith_NoCaller(*testing.T) {
-	log := zaplg.NewWith(os.Stdout, "text", true, false, 0)
+	log := zaplg.NewWith(os.Stdout, "text", true, true, false, 0)
 	logItAll(log)
 }
 
@@ -56,7 +56,7 @@ func TestZapTestVsTestLg(t *testing.T) {
 
 	t.Log("testlg -- Observe the concurring caller info reported by the testing framework and zap itself")
 	factoryFn := func(w io.Writer) lg.Log {
-		return zaplg.NewWith(w, "text", true, true, 1)
+		return zaplg.NewWith(w, "text", true, true, true, 1)
 	}
 	log := testlg.NewWith(t, factoryFn)
 	log.Debugf("accurate caller info")
@@ -76,9 +76,9 @@ func logItAll(log lg.Log) {
 	log.WarnIfError(nil)
 	log.WarnIfError(errors.New("error: WarnIfError msg"))
 
-	log.WarnIfFnError(nil)
-	log.WarnIfFnError(func() error { return nil })
-	log.WarnIfFnError(func() error { return errors.New("error: WarnIfFnError msg") })
+	log.WarnIfFuncError(nil)
+	log.WarnIfFuncError(func() error { return nil })
+	log.WarnIfFuncError(func() error { return errors.New("error: WarnIfFuncError msg") })
 
 	log.WarnIfCloseError(nil)
 	log.WarnIfCloseError(errCloser{})

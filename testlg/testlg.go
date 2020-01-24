@@ -147,42 +147,6 @@ func (l *Log) Warnf(format string, a ...interface{}) {
 	l.t.Log(stripNewLineEnding(string(output)))
 }
 
-// Errorf logs at ERROR level to t.Log, or if in strict mode,
-// the message is logged via t.Error, resulting in test failure.
-func (l *Log) Errorf(format string, v ...interface{}) {
-	l.mu.Lock()
-	defer l.mu.Unlock()
-
-	l.impl.Errorf(format, v...)
-	output, _ := ioutil.ReadAll(&l.buf)
-
-	l.t.Helper()
-
-	if l.strict {
-		l.t.Error(stripNewLineEnding(string(output)))
-	} else {
-		l.t.Log(stripNewLineEnding(string(output)))
-	}
-}
-
-// Error logs at ERROR level to t.Log, or if in strict mode,
-// the message is logged via t.Error, resulting in test failure.
-func (l *Log) Error(a ...interface{}) {
-	l.mu.Lock()
-	defer l.mu.Unlock()
-
-	l.impl.Error(a...)
-	output, _ := ioutil.ReadAll(&l.buf)
-
-	l.t.Helper()
-
-	if l.strict {
-		l.t.Error(stripNewLineEnding(string(output)))
-	} else {
-		l.t.Log(stripNewLineEnding(string(output)))
-	}
-}
-
 func (l *Log) WarnIfError(err error) {
 	if err == nil {
 		return
@@ -198,7 +162,7 @@ func (l *Log) WarnIfError(err error) {
 	l.t.Log(stripNewLineEnding(string(output)))
 }
 
-func (l *Log) WarnIfFnError(fn func() error) {
+func (l *Log) WarnIfFuncError(fn func() error) {
 	if fn == nil {
 		return
 	}
@@ -236,6 +200,42 @@ func (l *Log) WarnIfCloseError(c io.Closer) {
 
 	l.t.Helper()
 	l.t.Log(stripNewLineEnding(string(output)))
+}
+
+// Error logs at ERROR level to t.Log, or if in strict mode,
+// the message is logged via t.Error, resulting in test failure.
+func (l *Log) Error(a ...interface{}) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	l.impl.Error(a...)
+	output, _ := ioutil.ReadAll(&l.buf)
+
+	l.t.Helper()
+
+	if l.strict {
+		l.t.Error(stripNewLineEnding(string(output)))
+	} else {
+		l.t.Log(stripNewLineEnding(string(output)))
+	}
+}
+
+// Errorf logs at ERROR level to t.Log, or if in strict mode,
+// the message is logged via t.Error, resulting in test failure.
+func (l *Log) Errorf(format string, v ...interface{}) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	l.impl.Errorf(format, v...)
+	output, _ := ioutil.ReadAll(&l.buf)
+
+	l.t.Helper()
+
+	if l.strict {
+		l.t.Error(stripNewLineEnding(string(output)))
+	} else {
+		l.t.Log(stripNewLineEnding(string(output)))
+	}
 }
 
 // stripNewLineEnding strips the trailing newline from

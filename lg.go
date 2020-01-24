@@ -30,32 +30,32 @@ type Log interface {
 	// Warnf logs at WARN level.
 	Warnf(format string, a ...interface{})
 
-	// Error logs at ERROR level.
-	Error(a ...interface{})
-
-	// Errorf logs at ERROR level.
-	Errorf(format string, a ...interface{})
-
 	// WarnIfError is no-op if err is nil; if non-nil, err
 	// is logged at WARN level.
 	WarnIfError(err error)
 
-	// WarnIfFnError is no-op if fn is nil; if fn is non-nil,
+	// WarnIfFuncError is no-op if fn is nil; if fn is non-nil,
 	// fn is executed and if fn's error is non-nil, that error
 	// is logged at WARN level.
-	WarnIfFnError(fn func() error)
+	WarnIfFuncError(fn func() error)
 
 	// WarnIfCloseError is no-op if c is nil; if c is non-nil,
 	// c.Close is executed and if Close's error is non-nil,
 	// that error is logged at WARN level.
 	//
-	// WarnIfCloseError is preferred to WarnIfFnError
+	// WarnIfCloseError is preferred to WarnIfFuncError
 	// when c may be nil.
 	//
 	//  var c io.Closer = nil
-	//  log.WarnIfCloseError(c)    // ok
-	//  log.WarnIfFnError(c.Close) // panic
+	//  log.WarnIfCloseError(c)      // ok
+	//  log.WarnIfFuncError(c.Close) // panic
 	WarnIfCloseError(c io.Closer)
+
+	// Error logs at ERROR level.
+	Error(a ...interface{})
+
+	// Errorf logs at ERROR level.
+	Errorf(format string, a ...interface{})
 }
 
 // Discard returns a Log whose methods are no-op.
@@ -78,16 +78,10 @@ func (discardLog) Warn(a ...interface{}) {
 func (discardLog) Warnf(format string, a ...interface{}) {
 }
 
-func (discardLog) Error(a ...interface{}) {
-}
-
-func (discardLog) Errorf(format string, a ...interface{}) {
-}
-
 func (discardLog) WarnIfError(err error) {
 }
 
-func (discardLog) WarnIfFnError(fn func() error) {
+func (discardLog) WarnIfFuncError(fn func() error) {
 	if fn != nil {
 		_ = fn()
 	}
@@ -97,4 +91,10 @@ func (discardLog) WarnIfCloseError(c io.Closer) {
 	if c != nil {
 		_ = c.Close()
 	}
+}
+
+func (discardLog) Error(a ...interface{}) {
+}
+
+func (discardLog) Errorf(format string, a ...interface{}) {
 }

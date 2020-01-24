@@ -56,13 +56,6 @@ func (l *Log) Warnf(format string, a ...interface{}) {
 	_ = l.impl.Output(callDepth, l.sprintf("WARN", format, a...))
 }
 
-func (l *Log) Error(a ...interface{}) {
-	_ = l.impl.Output(callDepth, l.sprint("ERROR", a...))
-}
-func (l *Log) Errorf(format string, a ...interface{}) {
-	_ = l.impl.Output(callDepth, l.sprintf("ERROR", format, a...))
-}
-
 func (l *Log) WarnIfError(err error) {
 	if err == nil {
 		return
@@ -71,7 +64,7 @@ func (l *Log) WarnIfError(err error) {
 	_ = l.impl.Output(callDepth, l.sprintf("WARN", err.Error()))
 }
 
-func (l *Log) WarnIfFnError(fn func() error) {
+func (l *Log) WarnIfFuncError(fn func() error) {
 	if fn == nil {
 		return
 	}
@@ -95,6 +88,13 @@ func (l *Log) WarnIfCloseError(c io.Closer) {
 	}
 
 	_ = l.impl.Output(callDepth, l.sprintf("WARN", err.Error()))
+}
+
+func (l *Log) Error(a ...interface{}) {
+	_ = l.impl.Output(callDepth, l.sprint("ERROR", a...))
+}
+func (l *Log) Errorf(format string, a ...interface{}) {
+	_ = l.impl.Output(callDepth, l.sprintf("ERROR", format, a...))
 }
 
 func (l *Log) sprintf(level, format string, a ...interface{}) string {

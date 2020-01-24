@@ -16,7 +16,7 @@ func DoSomething(log lg.Log) error {
   if err != nil {
     return err
   }
-  defer log.WarnIfFnError(f.Close)
+  defer log.WarnIfFuncError(f.Close)
 ```
 
 ## Installation
@@ -38,8 +38,8 @@ log.Errorf("error msg: %v", err)
 
 log.WarnIfError(f.Close())
 
-// WarnIfFnError typically used with defer
-defer log.WarnIfFnError(f.Close)
+// WarnIfFuncError typically used with defer
+defer log.WarnIfFuncError(f.Close)
 
 // Alternatively
 defer log.WarnIfCloseError(f)
@@ -76,14 +76,14 @@ Go's testing framework. If using `zap`, `testlg` has [benefits](#zaptest) over `
 
 ## `WarnIf` methods
 In addition to the basic `Debugf`, `Warnf`, and `Errorf` methods, the `Log` interface
- defines methods `WarnIfError`, `WarnIfFnError`, and `WarnIfCloseError`.
+ defines methods `WarnIfError`, `WarnIfFuncError`, and `WarnIfCloseError`.
 
 > **TLDR**
 >
 > Do this:
 > 
 > ```go
->   defer log.WarnIfFnError(dataSource.Close)
+>   defer log.WarnIfFuncError(dataSource.Close)
 > ```
 > 
 > Not this:
@@ -226,26 +226,26 @@ defer func() { log.WarnIfError(dataSource.Close()) }()
 
 ### `BusinessOperationV4`
 
-But we can get cleaner yet. Here's `Log.WarnIfFnError`:
+But we can get cleaner yet. Here's `Log.WarnIfFuncError`:
 
 ```go
-// WarnIfFnError is no-op if fn is nil; if fn is non-nil,
+// WarnIfFuncError is no-op if fn is nil; if fn is non-nil,
 // fn is executed and if fn's error is non-nil, that error
 // is logged at WARN level.
-WarnIfFnError(fn func() error)
+WarnIfFuncError(fn func() error)
 ```
 
 In practice, this reads nicely:
 
 ```go
-// BusinessOperationV4 uses WarnIfFnError to make the defer statement
+// BusinessOperationV4 uses WarnIfFuncError to make the defer statement
 // yet more succinct.
 func BusinessOperationV4(log lg.Log) (receipt string, err error) {
   dataSource, err := OpenBizData()
   if err != nil {
     return "", err
   }
-  defer log.WarnIfFnError(dataSource.Close)
+  defer log.WarnIfFuncError(dataSource.Close)
   
   // rest of function omitted 
 ```	
@@ -257,11 +257,11 @@ As a variation when the `dataSource` can be nil, we could use `WarnIfCloseError`
 // c.Close is executed and if Close's error is non-nil,
 // that error is logged at WARN level.
 //
-// WarnIfCloseError is preferred to WarnIfFnError when c may be nil.
+// WarnIfCloseError is preferred to WarnIfFuncError when c may be nil.
 //
 //  var c io.Closer = nil
 //  log.WarnIfCloseError(c)    // ok
-//  log.WarnIfFnError(c.Close) // panic
+//  log.WarnIfFuncError(c.Close) // panic
 WarnIfCloseError(c io.Closer)
 ```	
 
