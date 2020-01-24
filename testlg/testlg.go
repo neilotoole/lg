@@ -1,4 +1,4 @@
-// Package testlg contains a lg.Log implementation that
+// Package testlg implements a lg.Log that
 // directs output to the testing framework.
 //
 // This is useful if your code under test writes to a log,

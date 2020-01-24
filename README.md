@@ -30,11 +30,11 @@ func DoSomething(log lg.Log) error {
 log := loglg.New()
 
 // Or using uber/zap adapter with options
-log = zaplg.NewWith(os.Stdout, "json", true, 0)
+log = zaplg.NewWith(os.Stdout, "json", true, true, true, 0)
 
-log.Debugf("debug msg")
-log.Warnf("warning msg")
-log.Errorf("error msg: %v", err)
+log.Debug("hello world")
+log.Warnf("not %s at all", "good")
+log.Error(err)
 
 log.WarnIfError(f.Close())
 
@@ -43,8 +43,17 @@ defer log.WarnIfFuncError(f.Close)
 
 // Alternatively
 defer log.WarnIfCloseError(f)
-
 ```
+
+When testing:
+
+```go
+func TestMe(t *testing.T) {
+	log := testlg.New(t)
+	log.Debug("Hello world") // directs output to t.Log
+}
+```
+
 
 ## Overview
 
@@ -126,7 +135,7 @@ func BusinessOperationV1(log lg.Log) (receipt string, err error) {
 }
 ```
 
-The function calls `OpenBizData` which returns an `io.ReadCloser` (could be a file for example), reads data, and then invokes an external API, e.g. to book a flight. The `ExternalAPICall` function returns a transaction receipt or error, which `BusinessOperationV1` returns.
+`BusinessOperationV1` calls `OpenBizData` which returns an `io.ReadCloser` (could be a file for example), reads data, and then invokes an external API, e.g. to book a flight. The `ExternalAPICall` function returns a transaction receipt or error, which `BusinessOperationV1` returns.
 
 We're concerned with the line `defer dataSource.Close()`.
 
@@ -136,7 +145,7 @@ A common judgment is that if the business operation succeeded, the error on `Clo
 
 We could return the successful receipt and the `Close` error, but that's counter to the Go idiom that if an error is returned, the other return items should be the zero value.
 
-In many cases, the usual handling is simply not to check the `Close` error. And `defer dataSource.Close()` reads nicely. But this error should not be ignored. It is symptomatic of some underlying issue, and it should be investigated, even it's not causing a business operations to fail (yet).
+In many cases, the usual handling is simply not to check the `Close` error (`defer dataSource.Close()` reads nicely as well). But this error should not be ignored. It is symptomatic of some underlying issue, and it should be investigated, even it's not causing a business operations to fail (yet).
 
 A quick reminder of how `lg` chooses to define log levels:
 
@@ -250,7 +259,7 @@ func BusinessOperationV4(log lg.Log) (receipt string, err error) {
   // rest of function omitted 
 ```	
 
-As a variation when the `dataSource` can be `nil`, we could use `WarnIfCloseError`:
+As a variation when `dataSource` can be `nil`, we could use `WarnIfCloseError`:
 
 ```go
 // WarnIfCloseError is no-op if c is nil; if c is non-nil,
@@ -297,8 +306,8 @@ outputs:
 
 ### <a name="zaptest"></a> Prefer `testlg` to `zaptest`
 
-If you're using Uber's [`zap`](https://github.com/uber-go/zap) as your logging impl, you'll have noticed that
-pkg `zaptest` provides an adapter for use with `testing`.
+If you're using Uber's [`zap`](https://github.com/uber-go/zap) as your logging impl, you'll
+have noticed that pkg `zaptest` provides an adapter for use with `testing`.
 Alas, `zaptest` has one ugly drawback: it causes `testing` to
 output incorrect caller information. The test output from  [`TestZapTestVsTestLg`](zaplg/zaplg_test.go#L45) demonstrates the issue (edited for brevity):
 
@@ -312,6 +321,6 @@ output incorrect caller information. The test output from  [`TestZapTestVsTestLg
     zaplg_test.go:79:  DEBUG  zaplg/zaplg_test.go:79  accurate caller info
 ```
 
-Note `line 4`, where `testing` reports `logger.go:130` as the caller, while zap itself
+Note `line 4`, where `testing` reports `logger.go:130` as the caller, while `zap` itself
 reports the correct caller (`zaplg/zaplg_test.go:70`). In contrast, `testlg` causes `testing`
 to accurately report the caller.

@@ -16,9 +16,8 @@ func New() *Log {
 	return NewWith(os.Stdout, true, true, true)
 }
 
-// NewWith returns a Log that writes to w. If caller is true,
-// the call site is logged. If level is true, the log level
-// (DEBUG, WARN, ERROR) is logged.
+// NewWith returns a Log that writes to w. The timestamp, level
+// and caller params determine if those fields are reported.
 func NewWith(w io.Writer, timestamp, level, caller bool) *Log {
 	var flag int
 	if timestamp {

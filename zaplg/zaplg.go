@@ -83,10 +83,9 @@ func NewWith(w io.Writer, format string, timestamp, level, caller bool, addCalle
 	return NewWithZap(logger)
 }
 
-// NewWithZap returns a Log using the supplied zap.Logger, thus
-// permitting customization of logging behavior.
-func NewWithZap(logger *zap.Logger) *Log {
-	return &Log{logger.Sugar()}
+// NewWithZap returns a Log backed by zlogger.
+func NewWithZap(zlogger *zap.Logger) *Log {
+	return &Log{zlogger.Sugar()}
 }
 
 // Log implements lg.Log.
@@ -150,5 +149,7 @@ func timeEncoder(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
 // TestingFactoryFn can be passed to testlg.NewWith to
 // use zap as the backing impl.
 var TestingFactoryFn = func(w io.Writer) lg.Log {
+	// caller arg is false because testing.T will
+	// report the caller anyway.
 	return NewWith(w, "text", true, true, false, 0)
 }

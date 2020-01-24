@@ -1,13 +1,9 @@
 package loglg_test
 
 import (
-	"bufio"
-	"bytes"
 	"errors"
 	"os"
 	"testing"
-
-	"github.com/stretchr/testify/require"
 
 	"github.com/neilotoole/lg"
 	"github.com/neilotoole/lg/loglg"
@@ -23,65 +19,6 @@ func TestNew(t *testing.T) {
 func TestNewWith(t *testing.T) {
 	log := loglg.NewWith(os.Stdout, true, true, true)
 	logItAll(log)
-}
-
-func TestOutput(t *testing.T) {
-	var lineParts = [][]string{
-		{"loglg_test.go:", "DEBUG", "Debug msg"},
-		{"loglg_test.go:", "DEBUG", "Debugf msg"},
-		{"loglg_test.go:", "WARN", "Warn msg"},
-		{"loglg_test.go:", "WARN", "Warnf msg"},
-		{"loglg_test.go:", "ERROR", "Error msg"},
-		{"loglg_test.go:", "ERROR", "Errorf msg"},
-		{"loglg_test.go:", "WARN", "WarnIfError msg"},
-		{"loglg_test.go:", "WARN", "WarnIfFuncError msg"},
-		{"loglg_test.go:", "WARN", "WarnIfCloseError msg"},
-	}
-
-	testCases := []struct {
-		name   string
-		level  bool
-		caller bool
-	}{
-		{name: "level_caller", level: true, caller: true},
-		{name: "level_no_caller", level: true, caller: false},
-		{name: "no_level_caller", level: false, caller: true},
-		{name: "no_level_no_caller", level: false, caller: false},
-	}
-
-	for _, tc := range testCases {
-		tc := tc
-		t.Run(tc.name, func(t *testing.T) {
-			buf := &bytes.Buffer{}
-			log := loglg.NewWith(buf, false, tc.level, tc.caller)
-			logItAll(log)
-
-			sc := bufio.NewScanner(buf)
-			var gotLines []string
-			for sc.Scan() {
-				gotLines = append(gotLines, sc.Text())
-			}
-
-			require.NoError(t, sc.Err())
-			require.Equal(t, len(lineParts), len(gotLines))
-
-			for i, gotLine := range gotLines {
-				if tc.caller {
-					require.Contains(t, gotLine, lineParts[i][0], "caller should be printed")
-				} else {
-					require.NotContains(t, gotLine, lineParts[i][0], "caller should not be printed")
-				}
-
-				if tc.level {
-					require.Contains(t, gotLine, lineParts[i][1], "level should be printed")
-				} else {
-					require.NotContains(t, gotLine, lineParts[i][1], "level should not be printed")
-				}
-
-				require.Contains(t, gotLine, lineParts[i][2], "log msg should be printed")
-			}
-		})
-	}
 }
 
 // logItAll executes all the methods of lg.Log.

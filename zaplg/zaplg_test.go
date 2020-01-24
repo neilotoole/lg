@@ -2,8 +2,8 @@ package zaplg_test
 
 import (
 	"errors"
+	"fmt"
 	"io"
-	"os"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -22,14 +22,47 @@ func TestNew(t *testing.T) {
 	logItAll(log)
 }
 
-func TestNewWith_Caller(t *testing.T) {
-	log := zaplg.NewWith(os.Stdout, "text", true, true, true, 0)
-	logItAll(log)
-}
+func TestNewWith(t *testing.T) {
+	// TestNewWith doesn't actually test the log output, only
+	// verifies that the various input arg combinations don't
+	// blow it up.
+	testCases := []struct {
+		format    string
+		timestamp bool
+		level     bool
+		caller    bool
+	}{
+		{format: "text", timestamp: true, level: true, caller: true},
+		{format: "text", timestamp: true, level: true, caller: false},
+		{format: "text", timestamp: true, level: false, caller: true},
+		{format: "text", timestamp: true, level: false, caller: false},
+		{format: "text", timestamp: false, level: true, caller: true},
+		{format: "text", timestamp: false, level: true, caller: false},
+		{format: "text", timestamp: false, level: false, caller: true},
+		{format: "text", timestamp: false, level: false, caller: false},
 
-func TestNewWith_NoCaller(*testing.T) {
-	log := zaplg.NewWith(os.Stdout, "text", true, true, false, 0)
-	logItAll(log)
+		{format: "json", timestamp: true, level: true, caller: true},
+		{format: "json", timestamp: true, level: true, caller: false},
+		{format: "json", timestamp: true, level: false, caller: true},
+		{format: "json", timestamp: true, level: false, caller: false},
+		{format: "json", timestamp: false, level: true, caller: true},
+		{format: "json", timestamp: false, level: true, caller: false},
+		{format: "json", timestamp: false, level: false, caller: true},
+		{format: "json", timestamp: false, level: false, caller: false},
+	}
+
+	for _, tc := range testCases {
+		tc := tc
+
+		name := fmt.Sprintf("%s__timestamp_%v__level_%v__caller_%v", tc.format, tc.timestamp, tc.level, tc.caller)
+		t.Run(name, func(t *testing.T) {
+			log := testlg.NewWith(t, func(w io.Writer) lg.Log {
+				return zaplg.NewWith(w, tc.format, tc.timestamp, tc.level, tc.caller, 1)
+			})
+
+			logItAll(log)
+		})
+	}
 }
 
 func TestNewWithZap(t *testing.T) {

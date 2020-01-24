@@ -16,7 +16,7 @@ import "io"
 // the type name should be Logger. But the sense is that
 // Orwell's sixth rule prevails here. It's not that lg.Logger
 // is barbaric in and of itself, but a thousand appearances
-// of lg.Logger vs lg.Log sells constitutes a horde.
+// of lg.Logger vs lg.Log constitutes a horde.
 type Log interface {
 	// Debug logs at DEBUG level.
 	Debug(a ...interface{})
