@@ -1,7 +1,7 @@
 # neilotoole/lg
 
 `lg` is an exploration of a minimal, leveled,
-unstructured logging interface for enterprise developers.
+unstructured logging interface for enterprise applications.
 It is not suggested for production use.
 
 ## TLDR
@@ -59,7 +59,7 @@ to look at it eventually, possibly passing it on to dev.
 
 This exploration examines a specific issue in detail: how to handle an `io.Closer`
 error after the main business operation has succeeded. The conclusion
-is that this errors is best logged at `WARN` level. The `lg.Log` interface
+is that this error is best logged at `WARN` level. The `lg.Log` interface
 provides convenience methods for this scenario.
 
 Additionally, `lg` demonstrates the separation of a logging interface
