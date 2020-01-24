@@ -87,19 +87,15 @@ brevity), the `Log` interface defines methods `WarnIfError` and
 > Not this:
 > 
 > ```go
-  defer func() {
-    err := dataSource.Close()
-    if err != nil {
-      log.Warnf(err.Error())
-    }
-  }()
-```
-> 
-
-
+>  defer func() {
+>    err := dataSource.Close()
+>    if err != nil {
+>      log.Warnf(err.Error())
+>    }
+>  }()
+> ```
 
 The following code snippets are lifted from `example_test.go`. 
-
 
 ### `BusinessOperationV1`
 
