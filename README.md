@@ -1,4 +1,4 @@
-# `neilotoole/lg`: logging exploration
+# neilotoole/lg
 
 `lg` is an exploration of a minimal, leveled,
 unstructured logging interface for enterprise developers.
@@ -6,7 +6,7 @@ It is not suggested for production use.
 
 ## TLDR
 
-Log levels `ERROR`, `WARN` and `DEBUG` are appropriate for enterprise development.
+Log levels `ERROR`, `WARN` and `DEBUG` are appropriate for many enterprise applications.
 
 Use this idiom with `io.Closer`:
 
@@ -78,7 +78,9 @@ In addition to the basic `Debugf`, `Warnf`, and `Errorf` methods
 brevity), the `Log` interface defines methods `WarnIfError` and
 `WarnIfFnError`.
 
-> **TLDR:** Do this:
+> **TLDR**
+>
+> Do this:
 > 
 > ```go
 >   defer log.WarnIfFnError(dataSource.Close)
@@ -190,9 +192,9 @@ We can do better.
 In `BusinessOperationV3`, we make the `defer` tidier by using `Log.WarnIfError`.
 
 ```go
-  // WarnIfError is no-op if err is nil; if non-nil, err
-  // is logged at WARN level.
-  WarnIfError(err error)
+// WarnIfError is no-op if err is nil; if non-nil, err
+// is logged at WARN level.
+WarnIfError(err error)
 ```
 
 Here's how it looks:
@@ -225,10 +227,10 @@ defer func() { log.WarnIfError(dataSource.Close()) }()
 But we can get cleaner yet. Here's `Log.WarnIfFnError`:
 
 ```go
-  // WarnIfFnError is no-op if fn is nil; if fn is non-nil,
-  // fn is executed and if fn's error is non-nil, that error
-  // is logged at WARN level.
-  WarnIfFnError(fn func() error)
+// WarnIfFnError is no-op if fn is nil; if fn is non-nil,
+// fn is executed and if fn's error is non-nil, that error
+// is logged at WARN level.
+WarnIfFnError(fn func() error)
 ```
 
 In practice, this reads nicely:
@@ -249,16 +251,16 @@ func BusinessOperationV4(log lg.Log) (receipt string, err error) {
 As a variation, we could add a method like this to `Log`:
 
 ```go
-  // WarnIfCloserError is no-op if c is nil; if c is non-nil,
-  // c.Close is executed and if Close's error is non-nil,
-  // that error is logged at WARN level.
-  WarnIfCloserError(c io.Closer)
+// WarnIfCloserError is no-op if c is nil; if c is non-nil,
+// c.Close is executed and if Close's error is non-nil,
+// that error is logged at WARN level.
+WarnIfCloserError(c io.Closer)
 ```	
 
 And invoke like so:
 
 ```go
-  defer log.WarnIfCloserError(dataSource)
+defer log.WarnIfCloserError(dataSource)
 ```
 
 `WarnIfCloserError` has the benefit that the `Closer` arg can be `nil`, but I'm not yet persuaded that it's useful enough to incorporate into `Log`.
