@@ -97,7 +97,7 @@ In addition to the basic `Debugf`, `Warnf`, and `Errorf` methods, the `Log` inte
 >  }()
 > ```
 
-The following code snippets are lifted from `example_test.go`. 
+We'll work our way through the origin story of the `WarnIf` methods. 
 
 ### `BusinessOperationV1`
 
@@ -170,7 +170,7 @@ func BusinessOperationV2(log lg.Log) (receipt string, err error) {
   // rest of function omitted 
 ```
 
-This achieves our goals. The `Close` error is logged at `WARN` level. We could call it a wrap here and go home. However, there's no question that this:
+This achieves our goals. The `Close` error is logged at `WARN` level. We could call it a day here and go home. However, there's no question that:
 
 ```go
 defer func() {
@@ -250,7 +250,7 @@ func BusinessOperationV4(log lg.Log) (receipt string, err error) {
   // rest of function omitted 
 ```	
 
-As a variation when the `dataSource` could be nil, we can use `WarnIfCloseError`:
+As a variation when the `dataSource` can be nil, we could use `WarnIfCloseError`:
 
 ```go
 // WarnIfCloseError is no-op if c is nil; if c is non-nil,
