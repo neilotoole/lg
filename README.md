@@ -41,6 +41,9 @@ log.WarnIfError(f.Close())
 // WarnIfFnError typically used with defer
 defer log.WarnIfFnError(f.Close)
 
+// Alternatively
+defer log.WarnIfCloseError(f)
+
 ```
 
 ## Overview
@@ -71,12 +74,9 @@ Go's testing framework. If using `zap`, `testlg` has [benefits](#zaptest) over `
 
 `lg` does not address structured logging, the virtues of which are outside scope.
 
-## `WarnIfError` and `WarnIfFnError`
-
-In addition to the basic `Debugf`, `Warnf`, and `Errorf` methods
-(matching `Debug`, `Warn` and `Error` methods are omitted for
-brevity), the `Log` interface defines methods `WarnIfError` and
-`WarnIfFnError`.
+## `WarnIf` methods
+In addition to the basic `Debugf`, `Warnf`, and `Errorf` methods, the `Log` interface
+ defines methods `WarnIfError`, `WarnIfFnError`, and `WarnIfCloseError`.
 
 > **TLDR**
 >
@@ -92,7 +92,7 @@ brevity), the `Log` interface defines methods `WarnIfError` and
 >  defer func() {
 >    err := dataSource.Close()
 >    if err != nil {
->      log.Warnf(err.Error())
+>      log.Warn(err)
 >    }
 >  }()
 > ```
@@ -153,15 +153,17 @@ This is the next iteration of our function:
 ```go
 // BusinessOperationV2 closes dataSource in a defer, and logs at WARN level
 // if an error results from Close.
+// BusinessOperationV2 closes dataSource in a defer,
+// and logs at WARN level if an error results from Close.
 func BusinessOperationV2(log lg.Log) (receipt string, err error) {
   dataSource, err := OpenBizData()
   if err != nil {
     return "", err
   }
   defer func() {
-    err := dataSource.Close()
-    if err != nil {
-      log.Warnf(err.Error())
+    closeErr := dataSource.Close()
+    if closeErr != nil {
+      log.Warnf(closeErr.Error())
     }
   }()
     
@@ -172,9 +174,9 @@ This achieves our goals. The `Close` error is logged at `WARN` level. We could c
 
 ```go
 defer func() {
-  err := dataSource.Close()
-  if err != nil {
-    log.Warnf(err.Error())
+  closeErr := dataSource.Close()
+  if closeErr != nil {
+    log.Warn(closeErr)
   }
 }()
 ```
@@ -248,19 +250,25 @@ func BusinessOperationV4(log lg.Log) (receipt string, err error) {
   // rest of function omitted 
 ```	
 
-As a variation, we could add a method like this to `Log`:
+As a variation when the `dataSource` could be nil, we can use `WarnIfCloseError`:
 
 ```go
-// WarnIfCloserError is no-op if c is nil; if c is non-nil,
+// WarnIfCloseError is no-op if c is nil; if c is non-nil,
 // c.Close is executed and if Close's error is non-nil,
 // that error is logged at WARN level.
-WarnIfCloserError(c io.Closer)
+//
+// WarnIfCloseError is preferred to WarnIfFnError when c may be nil.
+//
+//  var c io.Closer = nil
+//  log.WarnIfCloseError(c)    // ok
+//  log.WarnIfFnError(c.Close) // panic
+WarnIfCloseError(c io.Closer)
 ```	
 
 And invoke like so:
 
 ```go
-defer log.WarnIfCloserError(dataSource)
+defer log.WarnIfCloseError(dataSource)
 ```
 
 `WarnIfCloserError` has the benefit that the `Closer` arg can be `nil`, but I'm not yet persuaded that it's useful enough to incorporate into `Log`.

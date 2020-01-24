@@ -64,17 +64,17 @@ func Example_businessOperationV2() {
 	// Success: RECEIPT_ABC123
 }
 
-// BusinessOperationV2 closes dataSource in a defer, and logs at WARN level
-// if an error results from Close.
+// BusinessOperationV2 closes dataSource in a defer,
+// and logs at WARN level if an error results from Close.
 func BusinessOperationV2(log lg.Log) (receipt string, err error) {
 	dataSource, err := OpenBizData()
 	if err != nil {
 		return "", err
 	}
 	defer func() {
-		err := dataSource.Close()
-		if err != nil {
-			log.Warnf(err.Error())
+		closeErr := dataSource.Close()
+		if closeErr != nil {
+			log.Warnf(closeErr.Error())
 		}
 	}()
 
@@ -162,7 +162,7 @@ func ExternalAPICall(a []byte) (receipt string, err error) {
 
 // OpenBizData returns a ReadCloser whose Close method
 // always returns an error.
-func OpenBizData() (*dataSource, error) {
+func OpenBizData() (io.ReadCloser, error) {
 	return &dataSource{bytes.NewReader([]byte("TOKEN_XYZ456"))}, nil
 }
 

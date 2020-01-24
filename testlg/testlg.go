@@ -1,5 +1,5 @@
 // Package testlg contains a lg.Log implementation that
-// directs output to a testing.T.
+// directs output to the testing framework.
 //
 // This is useful if your code under test writes to a log,
 // and you want to capture that log output under testing.T.
@@ -7,9 +7,9 @@
 //
 //  func TestMe(t *testing.T) {
 //    log := testlg.New(t)
-//    log.Debugf("Hello world")
-//    log.Warnf("Hello Mars")
-//    log.Errorf("Hello Venus")
+//    log.Debugf("Hello %s", "World")
+//    log.Warn("Hello Mars")
+//    log.Error("Hello Venus")
 //  }
 //
 // produces the following:
@@ -20,14 +20,14 @@
 //      testlg_test.go:65: 09:48:38.849215 	WARN 	Hello Mars
 //      testlg_test.go:66: 09:48:38.849304 	ERROR	Hello Venus
 //
-// Log has a "strict" mode which pipes Errorf output to t.Error
-// instead of t.Log, resulting in test failure. This:
+// Log has a "strict" mode which pipes Error and Errorf output
+// to t.Error instead of t.Log, resulting in test failure. This:
 //
 //  func TestMe(t *testing.T) {
 //    log := testlg.New(t).Strict(true)
-//    log.Debugf("Hello World")
-//    log.Warnf("Hello Mars")
-//    log.Errorf("Hello Venus") // pipes to t.Error, resulting in test failure
+//    log.Debug("Hello World")
+//    log.Warn("Hello Mars")
+//    log.Error("Hello Venus") // pipes to t.Error, resulting in test failure
 //  }
 //
 // produces:
@@ -94,75 +94,111 @@ func NewWith(t testing.TB, factoryFn func(io.Writer) lg.Log) *Log {
 
 // Strict sets strict mode. When in strict mode, Errorf logs
 // via t.Error instead of t.Log, thus resulting in test failure.
-func (tl *Log) Strict(strict bool) *Log {
-	tl.strict = strict
-	return tl
+func (l *Log) Strict(strict bool) *Log {
+	l.strict = strict
+	return l
 }
 
 // Debugf logs at DEBUG level to t.Log.
-func (tl *Log) Debugf(format string, v ...interface{}) {
-	tl.mu.Lock()
-	defer tl.mu.Unlock()
+func (l *Log) Debug(a ...interface{}) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
 
-	tl.impl.Debugf(format, v...)
-	output, _ := ioutil.ReadAll(&tl.buf)
+	l.impl.Debug(a...)
+	output, _ := ioutil.ReadAll(&l.buf)
 
-	tl.t.Helper()
-	tl.t.Log(stripNewLineEnding(string(output)))
+	l.t.Helper()
+	l.t.Log(stripNewLineEnding(string(output)))
+}
+
+// Debugf logs at DEBUG level to t.Log.
+func (l *Log) Debugf(format string, a ...interface{}) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	l.impl.Debugf(format, a...)
+	output, _ := ioutil.ReadAll(&l.buf)
+
+	l.t.Helper()
+	l.t.Log(stripNewLineEnding(string(output)))
+}
+
+// Warn logs at WARN level to t.Log.
+func (l *Log) Warn(a ...interface{}) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	l.impl.Warn(a...)
+	output, _ := ioutil.ReadAll(&l.buf)
+
+	l.t.Helper()
+	l.t.Log(stripNewLineEnding(string(output)))
 }
 
 // Warnf logs at WARN level to t.Log.
-func (tl *Log) Warnf(format string, v ...interface{}) {
-	tl.mu.Lock()
-	defer tl.mu.Unlock()
+func (l *Log) Warnf(format string, a ...interface{}) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
 
-	tl.impl.Warnf(format, v...)
-	output, _ := ioutil.ReadAll(&tl.buf)
+	l.impl.Warnf(format, a...)
+	output, _ := ioutil.ReadAll(&l.buf)
 
-	tl.t.Helper()
-	tl.t.Log(stripNewLineEnding(string(output)))
+	l.t.Helper()
+	l.t.Log(stripNewLineEnding(string(output)))
 }
 
 // Errorf logs at ERROR level to t.Log, or if in strict mode,
 // the message is logged via t.Error, resulting in test failure.
-func (tl *Log) Errorf(format string, v ...interface{}) {
-	tl.mu.Lock()
-	defer tl.mu.Unlock()
+func (l *Log) Errorf(format string, v ...interface{}) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
 
-	tl.impl.Errorf(format, v...)
-	output, _ := ioutil.ReadAll(&tl.buf)
+	l.impl.Errorf(format, v...)
+	output, _ := ioutil.ReadAll(&l.buf)
 
-	tl.t.Helper()
+	l.t.Helper()
 
-	if tl.strict {
-		tl.t.Error(stripNewLineEnding(string(output)))
+	if l.strict {
+		l.t.Error(stripNewLineEnding(string(output)))
 	} else {
-		tl.t.Log(stripNewLineEnding(string(output)))
-
+		l.t.Log(stripNewLineEnding(string(output)))
 	}
 }
 
-// WarnIfError is no-op if err is nil; if non-nil, err
-// is logged at WARN level.
-func (tl *Log) WarnIfError(err error) {
+// Error logs at ERROR level to t.Log, or if in strict mode,
+// the message is logged via t.Error, resulting in test failure.
+func (l *Log) Error(a ...interface{}) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	l.impl.Error(a...)
+	output, _ := ioutil.ReadAll(&l.buf)
+
+	l.t.Helper()
+
+	if l.strict {
+		l.t.Error(stripNewLineEnding(string(output)))
+	} else {
+		l.t.Log(stripNewLineEnding(string(output)))
+	}
+}
+
+func (l *Log) WarnIfError(err error) {
 	if err == nil {
 		return
 	}
 
-	tl.mu.Lock()
-	defer tl.mu.Unlock()
+	l.mu.Lock()
+	defer l.mu.Unlock()
 
-	tl.impl.Warnf(err.Error())
-	output, _ := ioutil.ReadAll(&tl.buf)
+	l.impl.Warn(err)
+	output, _ := ioutil.ReadAll(&l.buf)
 
-	tl.t.Helper()
-	tl.t.Log(stripNewLineEnding(string(output)))
+	l.t.Helper()
+	l.t.Log(stripNewLineEnding(string(output)))
 }
 
-// WarnIfFnError is no-op if fn is nil; if fn is non-nil,
-// fn is executed and if fn's error is non-nil, that error
-// is logged at WARN level.
-func (tl *Log) WarnIfFnError(fn func() error) {
+func (l *Log) WarnIfFnError(fn func() error) {
 	if fn == nil {
 		return
 	}
@@ -172,14 +208,34 @@ func (tl *Log) WarnIfFnError(fn func() error) {
 		return
 	}
 
-	tl.mu.Lock()
-	defer tl.mu.Unlock()
+	l.mu.Lock()
+	defer l.mu.Unlock()
 
-	tl.impl.Warnf(err.Error())
-	output, _ := ioutil.ReadAll(&tl.buf)
+	l.impl.Warn(err)
+	output, _ := ioutil.ReadAll(&l.buf)
 
-	tl.t.Helper()
-	tl.t.Log(stripNewLineEnding(string(output)))
+	l.t.Helper()
+	l.t.Log(stripNewLineEnding(string(output)))
+}
+
+func (l *Log) WarnIfCloseError(c io.Closer) {
+	if c == nil {
+		return
+	}
+
+	err := c.Close()
+	if err == nil {
+		return
+	}
+
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	l.impl.Warn(err)
+	output, _ := ioutil.ReadAll(&l.buf)
+
+	l.t.Helper()
+	l.t.Log(stripNewLineEnding(string(output)))
 }
 
 // stripNewLineEnding strips the trailing newline from

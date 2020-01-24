@@ -26,30 +26,41 @@ func NewWith(w io.Writer, timestamp, level, caller bool) *Log {
 	}
 
 	if caller {
-		flag = flag | log.Lshortfile
+		flag |= log.Lshortfile
 	}
 
 	logger := log.New(w, "", flag)
 	return &Log{hasPrefix: timestamp || caller, level: level, impl: logger}
 }
 
+const callDepth = 2
+
 // Log implements lg.Log.
 type Log struct {
-	hasPrefix bool
 	impl      *log.Logger
+	hasPrefix bool
 	level     bool
 }
 
+func (l *Log) Debug(a ...interface{}) {
+	_ = l.impl.Output(callDepth, l.sprint("DEBUG", a...))
+}
 func (l *Log) Debugf(format string, a ...interface{}) {
-	_ = l.impl.Output(2, l.sprintf("DEBUG", format, a...))
+	_ = l.impl.Output(callDepth, l.sprintf("DEBUG", format, a...))
 }
 
+func (l *Log) Warn(a ...interface{}) {
+	_ = l.impl.Output(callDepth, l.sprint("WARN", a...))
+}
 func (l *Log) Warnf(format string, a ...interface{}) {
-	_ = l.impl.Output(2, l.sprintf("WARN", format, a...))
+	_ = l.impl.Output(callDepth, l.sprintf("WARN", format, a...))
 }
 
+func (l *Log) Error(a ...interface{}) {
+	_ = l.impl.Output(callDepth, l.sprint("ERROR", a...))
+}
 func (l *Log) Errorf(format string, a ...interface{}) {
-	_ = l.impl.Output(2, l.sprintf("ERROR", format, a...))
+	_ = l.impl.Output(callDepth, l.sprintf("ERROR", format, a...))
 }
 
 func (l *Log) WarnIfError(err error) {
@@ -57,7 +68,7 @@ func (l *Log) WarnIfError(err error) {
 		return
 	}
 
-	_ = l.impl.Output(2, l.sprintf("WARN", err.Error()))
+	_ = l.impl.Output(callDepth, l.sprintf("WARN", err.Error()))
 }
 
 func (l *Log) WarnIfFnError(fn func() error) {
@@ -70,7 +81,20 @@ func (l *Log) WarnIfFnError(fn func() error) {
 		return
 	}
 
-	_ = l.impl.Output(2, l.sprintf("WARN", err.Error()))
+	_ = l.impl.Output(callDepth, l.sprintf("WARN", err.Error()))
+}
+
+func (l *Log) WarnIfCloseError(c io.Closer) {
+	if c == nil {
+		return
+	}
+
+	err := c.Close()
+	if err == nil {
+		return
+	}
+
+	_ = l.impl.Output(callDepth, l.sprintf("WARN", err.Error()))
 }
 
 func (l *Log) sprintf(level, format string, a ...interface{}) string {
@@ -85,6 +109,21 @@ func (l *Log) sprintf(level, format string, a ...interface{}) string {
 	}
 
 	sb.WriteString(fmt.Sprintf(format, a...))
+
+	return sb.String()
+}
+func (l *Log) sprint(level string, a ...interface{}) string {
+	sb := strings.Builder{}
+	if l.hasPrefix {
+		sb.WriteString("\t")
+	}
+
+	if l.level {
+		level = fmt.Sprintf("%-5s\t", level)
+		sb.WriteString(level)
+	}
+
+	sb.WriteString(fmt.Sprint(a...))
 
 	return sb.String()
 }

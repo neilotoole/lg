@@ -20,6 +20,13 @@ func TestNew(t *testing.T) {
 func TestNewWith(t *testing.T) {
 	log := testlg.NewWith(t, testlg.FactoryFn)
 	logItAll(log)
+
+	t.Log("Switching to new testlg.FactoryFn")
+}
+
+func TestNewWith_Zap(t *testing.T) {
+	log := testlg.NewWith(t, zaplg.TestingFactoryFn)
+	logItAll(log)
 }
 
 func TestFactoryFn(t *testing.T) {
@@ -34,26 +41,33 @@ func TestFactoryFn(t *testing.T) {
 	}
 
 	t.Log("Switching to new testlg.FactoryFn")
-	log = testlg.New(t)
+	log = testlg.New(t) // should pick up the zap impl from testlg.FactoryFn
 	logItAll(log)
 }
 
 // logItAll executes all the methods of lg.Log.
 func logItAll(log lg.Log) {
-	log.Debugf("Debugf")
-	log.Warnf("Warnf")
-	log.Errorf("Errorf")
+	log.Debug("Debug msg")
+	log.Debugf("Debugf msg")
+	log.Warn("Warn msg")
+	log.Warnf("Warnf msg")
+	log.Error("Error msg")
+	log.Errorf("Errorf msg")
 
 	log.WarnIfError(nil)
-	log.WarnIfError(errors.New("WarnIfError"))
+	log.WarnIfError(errors.New("error: WarnIfError msg"))
 
 	log.WarnIfFnError(nil)
-	fn := func() error {
-		return nil
-	}
-	log.WarnIfFnError(fn)
-	fn = func() error {
-		return errors.New("WarnIfFnError")
-	}
-	log.WarnIfFnError(fn)
+	log.WarnIfFnError(func() error { return nil })
+	log.WarnIfFnError(func() error { return errors.New("error: WarnIfFnError msg") })
+
+	log.WarnIfCloseError(nil)
+	log.WarnIfCloseError(errCloser{})
+}
+
+type errCloser struct {
+}
+
+func (errCloser) Close() error {
+	return errors.New("error: WarnIfCloseError msg")
 }

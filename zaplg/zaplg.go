@@ -28,6 +28,8 @@ func New() *Log {
 //
 // Use NewWithZap if more control over output options is desired.
 func NewWith(w io.Writer, format string, caller bool, addCallerSkip int) *Log {
+	const textFormat = "text"
+
 	encoderCfg := zapcore.EncoderConfig{
 		MessageKey:     "msg",
 		LevelKey:       "level",
@@ -41,11 +43,11 @@ func NewWith(w io.Writer, format string, caller bool, addCallerSkip int) *Log {
 	term := isTerminal(w)
 
 	switch {
-	case term && format == "text":
+	case term && format == textFormat:
 		encoderCfg.EncodeLevel = zapcore.CapitalColorLevelEncoder
 	case term:
 		encoderCfg.EncodeLevel = zapcore.LowercaseColorLevelEncoder
-	case format == "text":
+	case format == textFormat:
 		encoderCfg.EncodeLevel = zapcore.CapitalLevelEncoder
 	default:
 		encoderCfg.EncodeLevel = zapcore.LowercaseLevelEncoder
@@ -56,7 +58,7 @@ func NewWith(w io.Writer, format string, caller bool, addCallerSkip int) *Log {
 	var core zapcore.Core
 
 	switch format {
-	case "text":
+	case textFormat:
 		core = zapcore.NewCore(zapcore.NewConsoleEncoder(encoderCfg), writeSyncer, level)
 	default: // case json
 		core = zapcore.NewCore(zapcore.NewJSONEncoder(encoderCfg), writeSyncer, level)
@@ -73,20 +75,22 @@ func NewWith(w io.Writer, format string, caller bool, addCallerSkip int) *Log {
 // NewWithZap returns a Log using the supplied zap.Logger, thus
 // permitting customization of logging behavior.
 func NewWithZap(logger *zap.Logger) *Log {
-	return &Log{*logger.Sugar()}
+	return &Log{logger.Sugar()}
 }
 
 // Log implements lg.Log.
 type Log struct {
-	zap.SugaredLogger
+	*zap.SugaredLogger
 }
+
+const callerSkip = 1
 
 func (l *Log) WarnIfError(err error) {
 	if err == nil {
 		return
 	}
 
-	logger := l.Desugar().WithOptions(zap.AddCallerSkip(1))
+	logger := l.Desugar().WithOptions(zap.AddCallerSkip(callerSkip))
 	logger.Warn(err.Error())
 }
 
@@ -100,7 +104,21 @@ func (l *Log) WarnIfFnError(fn func() error) {
 		return
 	}
 
-	logger := l.Desugar().WithOptions(zap.AddCallerSkip(1))
+	logger := l.Desugar().WithOptions(zap.AddCallerSkip(callerSkip))
+	logger.Warn(err.Error())
+}
+
+func (l *Log) WarnIfCloseError(c io.Closer) {
+	if c == nil {
+		return
+	}
+
+	err := c.Close()
+	if err == nil {
+		return
+	}
+
+	logger := l.Desugar().WithOptions(zap.AddCallerSkip(callerSkip))
 	logger.Warn(err.Error())
 }
 

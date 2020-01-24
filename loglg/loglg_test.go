@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"errors"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -15,12 +16,26 @@ import (
 var _ lg.Log = (*loglg.Log)(nil)
 
 func TestNew(t *testing.T) {
+	log := loglg.New()
+	logItAll(log)
+}
+
+func TestNewWith(t *testing.T) {
+	log := loglg.NewWith(os.Stdout, true, true, true)
+	logItAll(log)
+}
+
+func TestOutput(t *testing.T) {
 	var lineParts = [][]string{
-		{"loglg_test.go:", "DEBUG", "Debugf"},
-		{"loglg_test.go:", "WARN", "Warnf"},
-		{"loglg_test.go:", "ERROR", "Errorf"},
-		{"loglg_test.go:", "WARN", "WarnIfError"},
-		{"loglg_test.go:", "WARN", "WarnIfFnError"},
+		{"loglg_test.go:", "DEBUG", "Debug msg"},
+		{"loglg_test.go:", "DEBUG", "Debugf msg"},
+		{"loglg_test.go:", "WARN", "Warn msg"},
+		{"loglg_test.go:", "WARN", "Warnf msg"},
+		{"loglg_test.go:", "ERROR", "Error msg"},
+		{"loglg_test.go:", "ERROR", "Errorf msg"},
+		{"loglg_test.go:", "WARN", "WarnIfError msg"},
+		{"loglg_test.go:", "WARN", "WarnIfFnError msg"},
+		{"loglg_test.go:", "WARN", "WarnIfCloseError msg"},
 	}
 
 	testCases := []struct {
@@ -35,6 +50,7 @@ func TestNew(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
+		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			buf := &bytes.Buffer{}
 			log := loglg.NewWith(buf, false, tc.level, tc.caller)
@@ -70,20 +86,27 @@ func TestNew(t *testing.T) {
 
 // logItAll executes all the methods of lg.Log.
 func logItAll(log lg.Log) {
-	log.Debugf("Debugf")
-	log.Warnf("Warnf")
-	log.Errorf("Errorf")
+	log.Debug("Debug msg")
+	log.Debugf("Debugf msg")
+	log.Warn("Warn msg")
+	log.Warnf("Warnf msg")
+	log.Error("Error msg")
+	log.Errorf("Errorf msg")
 
 	log.WarnIfError(nil)
-	log.WarnIfError(errors.New("WarnIfError"))
+	log.WarnIfError(errors.New("error: WarnIfError msg"))
 
 	log.WarnIfFnError(nil)
-	fn := func() error {
-		return nil
-	}
-	log.WarnIfFnError(fn)
-	fn = func() error {
-		return errors.New("WarnIfFnError")
-	}
-	log.WarnIfFnError(fn)
+	log.WarnIfFnError(func() error { return nil })
+	log.WarnIfFnError(func() error { return errors.New("error: WarnIfFnError msg") })
+
+	log.WarnIfCloseError(nil)
+	log.WarnIfCloseError(errCloser{})
+}
+
+type errCloser struct {
+}
+
+func (errCloser) Close() error {
+	return errors.New("error: WarnIfCloseError msg")
 }
