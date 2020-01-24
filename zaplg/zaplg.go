@@ -15,10 +15,12 @@ import (
 	"github.com/neilotoole/lg"
 )
 
+const textFormat = "text"
+
 // New returns a Log that writes to os.Stdout
 // in text format, reporting the caller.
 func New() *Log {
-	return NewWith(os.Stdout, "text", true, 0)
+	return NewWith(os.Stdout, textFormat, true, true, 0)
 }
 
 // NewWith returns a Log that writes to w. Format should be one
@@ -27,17 +29,21 @@ func New() *Log {
 // to adjust the frame reported as the caller.
 //
 // Use NewWithZap if more control over output options is desired.
-func NewWith(w io.Writer, format string, caller bool, addCallerSkip int) *Log {
-	const textFormat = "text"
-
+func NewWith(w io.Writer, format string, timestamp, caller bool, addCallerSkip int) *Log {
 	encoderCfg := zapcore.EncoderConfig{
 		MessageKey:     "msg",
 		LevelKey:       "level",
-		CallerKey:      "caller",
-		EncodeCaller:   zapcore.ShortCallerEncoder,
-		TimeKey:        "time",
-		EncodeTime:     timeEncoder,
 		EncodeDuration: zapcore.StringDurationEncoder,
+	}
+
+	if caller {
+		encoderCfg.CallerKey = "caller"
+		encoderCfg.EncodeCaller = zapcore.ShortCallerEncoder
+	}
+
+	if timestamp {
+		encoderCfg.TimeKey = "time"
+		encoderCfg.EncodeTime = timeEncoder
 	}
 
 	term := isTerminal(w)
@@ -140,5 +146,5 @@ func timeEncoder(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
 // TestingFactoryFn can be passed to testlg.NewWith to
 // use zap as the backing impl.
 var TestingFactoryFn = func(w io.Writer) lg.Log {
-	return NewWith(w, "text", false, 0)
+	return NewWith(w, "text", true, false, 0)
 }

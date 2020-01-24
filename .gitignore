@@ -25,3 +25,5 @@ _testmain.go
 
 .idea
 lg.iml
+.envrc
+example_biz_test.go

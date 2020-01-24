@@ -271,9 +271,6 @@ And invoke like so:
 defer log.WarnIfCloseError(dataSource)
 ```
 
-`WarnIfCloserError` has the benefit that the `Closer` arg can be `nil`, but I'm not yet persuaded that it's useful enough to incorporate into `Log`.
-
-
 ## `testlg` adapter for `testing`
 Package `testlg` provides a `lg.Log` implementation that can output its
 log entries to `testing.T`. This test:

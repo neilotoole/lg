@@ -37,7 +37,7 @@ func TestFactoryFn(t *testing.T) {
 	defer func() { testlg.FactoryFn = prevFn }()
 
 	testlg.FactoryFn = func(w io.Writer) lg.Log {
-		return zaplg.NewWith(w, "text", true, 1)
+		return zaplg.NewWith(w, "text", true, true, 1)
 	}
 
 	t.Log("Switching to new testlg.FactoryFn")
