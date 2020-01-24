@@ -145,7 +145,7 @@ A common judgment is that if the business operation succeeded, the error on `Clo
 
 We could return the successful receipt and the `Close` error, but that's counter to the Go idiom that if an error is returned, the other return items should be the zero value.
 
-In many cases, the usual handling is simply not to check the `Close` error (`defer dataSource.Close()` reads nicely as well). But this error should not be ignored. It is symptomatic of some underlying issue, and it should be investigated, even it's not causing a business operations to fail (yet).
+In many cases, the usual handling is simply not to check the `Close` error (`defer dataSource.Close()` reads nicely as well). But this error should not be ignored. It is symptomatic of some underlying issue, and it should be investigated, even it's not causing a business operation to fail (yet).
 
 A quick reminder of how `lg` chooses to define log levels:
 
