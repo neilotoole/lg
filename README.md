@@ -117,7 +117,7 @@ Let's start with this function:
 // an external API. If the business operation fails, a non-nil
 // error is returned. If the business operation succeeds,
 // a non-empty transaction receipt is returned.
-// BusinessOperationV1 closes dataSource via defer, but does ignores
+// BusinessOperationV1 closes dataSource via defer, but ignores
 // any error from Close.
 func BusinessOperationV1(log lg.Log) (receipt string, err error) {
   dataSource, err := OpenBizData()
@@ -160,8 +160,6 @@ This `Close` error seems an ideal candidate to log at `WARN` level.
 This is the next iteration of our function:
 
 ```go
-// BusinessOperationV2 closes dataSource in a defer, and logs at WARN level
-// if an error results from Close.
 // BusinessOperationV2 closes dataSource in a defer,
 // and logs at WARN level if an error results from Close.
 func BusinessOperationV2(log lg.Log) (receipt string, err error) {
