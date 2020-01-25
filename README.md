@@ -117,6 +117,7 @@ Let's start with this function:
 // an external API. If the business operation fails, a non-nil
 // error is returned. If the business operation succeeds,
 // a non-empty transaction receipt is returned.
+//
 // BusinessOperationV1 closes dataSource via defer, but ignores
 // any error from Close.
 func BusinessOperationV1(log lg.Log) (receipt string, err error) {
