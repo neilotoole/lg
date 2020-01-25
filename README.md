@@ -67,7 +67,7 @@ We've lost actual dollars because of this thing. Ops needs to look at it immedia
 - `WARN`: the business operation didn't fail, but something fishy happened
 that should be diagnosed before it does start costing us money. Ops needs
 to look at it eventually, possibly passing it on to dev.
-- `DEBUG`: for developers, for after-the-fact diagnosis of problems. Sometimes `DEBUG` logs are the only practical way for devs to sherlock the disaster that occurred at our primary customer's installation, which of course cannot be recreated in tests because Mephisto himself couldn't conjure this excuse for a production environment.
+- `DEBUG`: for developers, for after-the-fact diagnosis of problems. Sometimes `DEBUG` logs are the only practical way for devs to sherlock the disaster that occurred at our primary customer's installation, which of course cannot be recreated in tests because Mephisto himself couldn't conjure this production environment.
 
 This exploration examines a specific issue in detail: how to handle an `io.Closer`
 error after the main business operation has succeeded. The conclusion
@@ -84,7 +84,7 @@ conjunction with Go's testing framework. If using `zap`, `testlg` has
 `lg` does not address structured logging, the virtues of which are outside scope.
 
 ## `WarnIf` methods
-In addition to the basic `Debugf`, `Warnf`, and `Errorf` methods, the `Log` interface
+In addition to typical logging methods such as `Debugf`, the `Log` interface
 defines methods `WarnIfError`, `WarnIfFuncError`, and `WarnIfCloseError`.
 
 > **TLDR**
