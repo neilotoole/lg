@@ -5,6 +5,8 @@ package zaplg
 import (
 	"io"
 	"os"
+	"runtime"
+	"strings"
 	"time"
 
 	"golang.org/x/crypto/ssh/terminal"
@@ -15,7 +17,11 @@ import (
 	"github.com/neilotoole/lg"
 )
 
-const textFormat = "text"
+const (
+	jsonFormat    = "json"
+	textFormat    = "text"
+	testingFormat = "testing"
+)
 
 // New returns a Log that writes to os.Stdout
 // in text format, reporting the timestamp, level, and caller.
@@ -24,7 +30,7 @@ func New() *Log {
 }
 
 // NewWith returns a Log that writes to w. Format should be one
-// of "json" or "text"; defaults to "text". The timestamp, level
+// of "json", "text", or "testing"; defaults to "text". The timestamp, level
 // and caller params determine if those fields are reported.
 // The addCallerSkip param is used to to adjust the frame
 // reported as the caller.
@@ -32,14 +38,17 @@ func New() *Log {
 // Use NewWithZap if more control over output options is desired.
 func NewWith(w io.Writer, format string, timestamp, level, caller bool, addCallerSkip int) *Log {
 	encoderCfg := zapcore.EncoderConfig{
-		MessageKey: "msg",
-
+		MessageKey:     "msg",
 		EncodeDuration: zapcore.StringDurationEncoder,
 	}
 
 	if caller {
 		encoderCfg.CallerKey = "caller"
-		encoderCfg.EncodeCaller = zapcore.ShortCallerEncoder
+		if format == testingFormat {
+			encoderCfg.EncodeCaller = TestingCallerEncoder
+		} else {
+			encoderCfg.EncodeCaller = FuncCallerEncoder
+		}
 	}
 
 	if timestamp {
@@ -54,11 +63,11 @@ func NewWith(w io.Writer, format string, timestamp, level, caller bool, addCalle
 	term := isTerminal(w)
 
 	switch {
-	case term && format == textFormat:
+	case term && format == textFormat, term && format == testingFormat:
 		encoderCfg.EncodeLevel = zapcore.CapitalColorLevelEncoder
 	case term:
 		encoderCfg.EncodeLevel = zapcore.LowercaseColorLevelEncoder
-	case format == textFormat:
+	case format == textFormat, format == testingFormat:
 		encoderCfg.EncodeLevel = zapcore.CapitalLevelEncoder
 	default:
 		encoderCfg.EncodeLevel = zapcore.LowercaseLevelEncoder
@@ -69,7 +78,7 @@ func NewWith(w io.Writer, format string, timestamp, level, caller bool, addCalle
 	var core zapcore.Core
 
 	switch format {
-	case "json":
+	case jsonFormat:
 		core = zapcore.NewCore(zapcore.NewJSONEncoder(encoderCfg), writeSyncer, zLevel)
 	default: // case text
 		core = zapcore.NewCore(zapcore.NewConsoleEncoder(encoderCfg), writeSyncer, zLevel)
@@ -151,5 +160,40 @@ func timeEncoder(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
 var TestingFactoryFn = func(w io.Writer) lg.Log {
 	// caller arg is false because testing.T will
 	// report the caller anyway.
-	return NewWith(w, "text", true, true, false, 0)
+	return NewWith(w, testingFormat, true, true, true, 1)
+}
+
+// FuncCallerEncoder extends zapcore.ShortCallerEncoder
+// to also include the calling function name. That is, it
+// serializes the caller in package/file:line:func format,
+// trimming all but the final directory from the full path.
+// This implementation is probably not very efficient, so
+// use with caution.
+func FuncCallerEncoder(caller zapcore.EntryCaller, enc zapcore.PrimitiveArrayEncoder) {
+	if !caller.Defined {
+		return
+	}
+
+	frame, _ := runtime.CallersFrames([]uintptr{caller.PC}).Next()
+	// ditch the path
+	s := frame.Function[strings.LastIndex(frame.Function, "/")+1:]
+	// and ditch the package
+	s = s[strings.IndexRune(s, '.')+1:]
+	enc.AppendString(caller.TrimmedPath() + ":" + s)
+}
+
+// FuncCallerEncoder serializes the caller in package.func format.
+// This is especially useful when working with the testing
+// framework, t.Log etc already report file:line.
+// This implementation is probably not very efficient, so
+// use with caution.
+func TestingCallerEncoder(caller zapcore.EntryCaller, enc zapcore.PrimitiveArrayEncoder) {
+	if !caller.Defined {
+		return
+	}
+
+	frame, _ := runtime.CallersFrames([]uintptr{caller.PC}).Next()
+	// ditch the path
+	s := "[" + frame.Function[strings.LastIndex(frame.Function, "/")+1:] + "]"
+	enc.AppendString(s)
 }
