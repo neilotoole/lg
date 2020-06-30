@@ -1,3 +1,8 @@
+![Actions Status](https://github.com/neilotoole/lg/workflows/Go/badge.svg)
+[![release](https://img.shields.io/badge/release-v0.3.0-green.svg)](https://github.com/neilotoole/errgroup/releases/tag/v0.3.0)
+[![GoDoc](https://godoc.org/github.com/golang/gddo?status.svg)](https://pkg.go.dev/github.com/neilotoole/lg)
+[![license](https://img.shields.io/github/license/neilotoole/lg)](./LICENSE)
+
 # neilotoole/lg
 
 `lg` is an exploration of a small, leveled,
