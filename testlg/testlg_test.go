@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/neilotoole/lg"
+	"github.com/neilotoole/lg/loglg"
 	"github.com/neilotoole/lg/testlg"
 	"github.com/neilotoole/lg/zaplg"
 )
@@ -30,14 +31,18 @@ func TestNewWith_Zap(t *testing.T) {
 }
 
 func TestFactoryFn(t *testing.T) {
-	log := testlg.New(t)
-	logItAll(log)
-
 	prevFn := testlg.FactoryFn
 	defer func() { testlg.FactoryFn = prevFn }()
 
 	testlg.FactoryFn = func(w io.Writer) lg.Log {
-		return zaplg.NewWith(w, "text", true, true, true, 1)
+		return loglg.NewWith(w, true, true, false)
+	}
+
+	log := testlg.New(t)
+	logItAll(log)
+
+	testlg.FactoryFn = func(w io.Writer) lg.Log {
+		return zaplg.NewWith(w, "test", true, true, true, 1)
 	}
 
 	t.Log("Switching to new testlg.FactoryFn")

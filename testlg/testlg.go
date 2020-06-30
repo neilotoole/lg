@@ -39,7 +39,7 @@
 //      testlg_test.go:66: 09:52:28.706599 	ERROR	Hello Venus
 //
 // This Log type does not itself generate log messages: this is
-// delegated to a backing log impl (loglg by default).
+// delegated to a backing log impl (zaplg by default).
 // An alternative impl can be set by passing a log factory func
 // to NewWith, or by changing the testlg.FactoryFn package variable.
 package testlg
@@ -53,20 +53,18 @@ import (
 	"testing"
 
 	"github.com/neilotoole/lg"
-	"github.com/neilotoole/lg/loglg"
+	"github.com/neilotoole/lg/zaplg"
 )
 
 // FactoryFn is used by New to create the backing Log impl.
-// By default this func uses stdlib log, but other impls
+// By default this func uses zaplg, but other impls
 // can be used as follows:
 //
-//  // Use zap as the log implementation.
+//  // Use loglg as the log implementation.
 //  testlg.FactoryFn = func(w io.Writer) lg.Log {
-//    return zaplg.New(w, "text", true, 1)
+//    return loglg.NewWith(w, true, true, false)
 //  }
-var FactoryFn = func(w io.Writer) lg.Log {
-	return loglg.NewWith(w, true, true, false)
-}
+var FactoryFn = zaplg.TestingFactoryFn
 
 // Log implements lg.Log, but directs its output to
 // the logging functions of testing.T.

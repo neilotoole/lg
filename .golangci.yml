@@ -43,11 +43,10 @@ linters-settings:
     check-shadowing: true
     settings:
       printf:
-#        funcs:
-#          - (github.com/golangci/golangci-lint/pkg/logutils.Log).Infof
-#          - (github.com/golangci/golangci-lint/pkg/logutils.Log).Warnf
-#          - (github.com/golangci/golangci-lint/pkg/logutils.Log).Errorf
-#          - (github.com/golangci/golangci-lint/pkg/logutils.Log).Fatalf
+        funcs:
+          - (github.com/neilotoole/lg.Log).Debugf
+          - (github.com/neilotoole/lg.Log).Warnf
+          - (github.com/neilotoole/lg.Log).Errorf
   lll:
     line-length: 140
   maligned:
