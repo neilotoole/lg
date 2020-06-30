@@ -76,11 +76,3 @@ type errCloser struct {
 func (errCloser) Close() error {
 	return errors.New("error: WarnIfCloseError msg")
 }
-
-func TestMe(t *testing.T) {
-	// Remove TestMe on git master
-	log := testlg.New(t)
-	log.Debugf("Hello %s", "World")
-	log.Warn("Hello Mars")
-	log.Error("Hello Venus")
-}
