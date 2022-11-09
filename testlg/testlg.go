@@ -5,38 +5,38 @@
 // and you want to capture that log output under testing.T.
 // For example:
 //
-//  func TestMe(t *testing.T) {
-//    log := testlg.New(t)
-//    log.Debugf("Hello %s", "World")
-//    log.Warn("Hello Mars")
-//    log.Error("Hello Venus")
-//  }
+//	func TestMe(t *testing.T) {
+//	  log := testlg.New(t)
+//	  log.Debugf("Hello %s", "World")
+//	  log.Warn("Hello Mars")
+//	  log.Error("Hello Venus")
+//	}
 //
 // produces the following:
 //
-//  === RUN   TestMe
-//  --- PASS: TestMe (0.00s)
-//      testlg_test.go:64: 09:48:38.849066 	DEBUG	Hello World
-//      testlg_test.go:65: 09:48:38.849215 	WARN 	Hello Mars
-//      testlg_test.go:66: 09:48:38.849304 	ERROR	Hello Venus
+//	=== RUN   TestMe
+//	--- PASS: TestMe (0.00s)
+//	    testlg_test.go:64: 09:48:38.849066 	DEBUG	Hello World
+//	    testlg_test.go:65: 09:48:38.849215 	WARN 	Hello Mars
+//	    testlg_test.go:66: 09:48:38.849304 	ERROR	Hello Venus
 //
 // Log has a "strict" mode which pipes Error and Errorf output
 // to t.Error instead of t.Log, resulting in test failure. This:
 //
-//  func TestMe(t *testing.T) {
-//    log := testlg.New(t).Strict(true)
-//    log.Debug("Hello World")
-//    log.Warn("Hello Mars")
-//    log.Error("Hello Venus") // pipes to t.Error, resulting in test failure
-//  }
+//	func TestMe(t *testing.T) {
+//	  log := testlg.New(t).Strict(true)
+//	  log.Debug("Hello World")
+//	  log.Warn("Hello Mars")
+//	  log.Error("Hello Venus") // pipes to t.Error, resulting in test failure
+//	}
 //
 // produces:
 //
-//  === RUN   TestMe
-//  --- FAIL: TestMe (0.00s)
-//      testlg_test.go:64: 09:52:28.706482 	DEBUG	Hello World
-//      testlg_test.go:65: 09:52:28.706591 	WARN 	Hello Mars
-//      testlg_test.go:66: 09:52:28.706599 	ERROR	Hello Venus
+//	=== RUN   TestMe
+//	--- FAIL: TestMe (0.00s)
+//	    testlg_test.go:64: 09:52:28.706482 	DEBUG	Hello World
+//	    testlg_test.go:65: 09:52:28.706591 	WARN 	Hello Mars
+//	    testlg_test.go:66: 09:52:28.706599 	ERROR	Hello Venus
 //
 // This Log type does not itself generate log messages: this is
 // delegated to a backing log impl (zaplg by default).
@@ -47,7 +47,6 @@ package testlg
 import (
 	"bytes"
 	"io"
-	"io/ioutil"
 	"strings"
 	"sync"
 	"testing"
@@ -60,10 +59,10 @@ import (
 // By default this func uses zaplg, but other impls
 // can be used as follows:
 //
-//  // Use loglg as the log implementation.
-//  testlg.FactoryFn = func(w io.Writer) lg.Log {
-//    return loglg.NewWith(w, true, true, false)
-//  }
+//	// Use loglg as the log implementation.
+//	testlg.FactoryFn = func(w io.Writer) lg.Log {
+//	  return loglg.NewWith(w, true, true, false)
+//	}
 var FactoryFn = zaplg.TestingFactoryFn
 
 // Log implements lg.Log, but directs its output to
@@ -97,13 +96,13 @@ func (l *Log) Strict(strict bool) *Log {
 	return l
 }
 
-// Debugf logs at DEBUG level to t.Log.
+// Debug logs at DEBUG level to t.Log.
 func (l *Log) Debug(a ...interface{}) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 
 	l.impl.Debug(a...)
-	output, _ := ioutil.ReadAll(&l.buf)
+	output, _ := io.ReadAll(&l.buf)
 
 	l.t.Helper()
 	l.t.Log(stripNewLineEnding(string(output)))
@@ -115,7 +114,7 @@ func (l *Log) Debugf(format string, a ...interface{}) {
 	defer l.mu.Unlock()
 
 	l.impl.Debugf(format, a...)
-	output, _ := ioutil.ReadAll(&l.buf)
+	output, _ := io.ReadAll(&l.buf)
 
 	l.t.Helper()
 	l.t.Log(stripNewLineEnding(string(output)))
@@ -127,7 +126,7 @@ func (l *Log) Warn(a ...interface{}) {
 	defer l.mu.Unlock()
 
 	l.impl.Warn(a...)
-	output, _ := ioutil.ReadAll(&l.buf)
+	output, _ := io.ReadAll(&l.buf)
 
 	l.t.Helper()
 	l.t.Log(stripNewLineEnding(string(output)))
@@ -139,7 +138,7 @@ func (l *Log) Warnf(format string, a ...interface{}) {
 	defer l.mu.Unlock()
 
 	l.impl.Warnf(format, a...)
-	output, _ := ioutil.ReadAll(&l.buf)
+	output, _ := io.ReadAll(&l.buf)
 
 	l.t.Helper()
 	l.t.Log(stripNewLineEnding(string(output)))
@@ -154,7 +153,7 @@ func (l *Log) WarnIfError(err error) {
 	defer l.mu.Unlock()
 
 	l.impl.Warn(err)
-	output, _ := ioutil.ReadAll(&l.buf)
+	output, _ := io.ReadAll(&l.buf)
 
 	l.t.Helper()
 	l.t.Log(stripNewLineEnding(string(output)))
@@ -174,7 +173,7 @@ func (l *Log) WarnIfFuncError(fn func() error) {
 	defer l.mu.Unlock()
 
 	l.impl.Warn(err)
-	output, _ := ioutil.ReadAll(&l.buf)
+	output, _ := io.ReadAll(&l.buf)
 
 	l.t.Helper()
 	l.t.Log(stripNewLineEnding(string(output)))
@@ -194,7 +193,7 @@ func (l *Log) WarnIfCloseError(c io.Closer) {
 	defer l.mu.Unlock()
 
 	l.impl.Warn(err)
-	output, _ := ioutil.ReadAll(&l.buf)
+	output, _ := io.ReadAll(&l.buf)
 
 	l.t.Helper()
 	l.t.Log(stripNewLineEnding(string(output)))
@@ -207,7 +206,7 @@ func (l *Log) Error(a ...interface{}) {
 	defer l.mu.Unlock()
 
 	l.impl.Error(a...)
-	output, _ := ioutil.ReadAll(&l.buf)
+	output, _ := io.ReadAll(&l.buf)
 
 	l.t.Helper()
 
@@ -225,7 +224,7 @@ func (l *Log) Errorf(format string, v ...interface{}) {
 	defer l.mu.Unlock()
 
 	l.impl.Errorf(format, v...)
-	output, _ := ioutil.ReadAll(&l.buf)
+	output, _ := io.ReadAll(&l.buf)
 
 	l.t.Helper()
 
@@ -240,8 +239,5 @@ func (l *Log) Errorf(format string, v ...interface{}) {
 // the output generated by Log impls (which typically add
 // a newline).
 func stripNewLineEnding(s string) string {
-	if strings.HasSuffix(s, "\n") {
-		s = s[0 : len(s)-1]
-	}
-	return s
+	return strings.TrimSuffix(s, "\n")
 }
