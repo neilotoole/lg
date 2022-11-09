@@ -63,7 +63,7 @@ import (
 //	testlg.FactoryFn = func(w io.Writer) lg.Log {
 //	  return loglg.NewWith(w, true, true, false)
 //	}
-var FactoryFn = zaplg.TestingFactoryFn
+var FactoryFn = zaplg.TestingFactoryFn //nolint:gochecknoglobals // needed
 
 // Log implements lg.Log, but directs its output to
 // the logging functions of testing.T.

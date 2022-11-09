@@ -82,7 +82,8 @@ func TestTestingFactoryFn(t *testing.T) {
 // caller info reported by the testing framework when
 // using zaptest as opposed to testlg.
 func TestZapTestVsTestLg(t *testing.T) {
-	t.Log("zaptest -- Observe the clashing caller info reported by the testing framework (misleading) vs zap itself (desired)")
+	t.Log(`zaptest -- Observe the clashing caller info reported by
+the testing framework (misleading) vs zap itself (desired)`)
 	zlog := zaptest.NewLogger(t, zaptest.WrapOptions(zap.AddCaller()))
 	zlog.Debug("misleading caller info")
 	zlog.Warn("misleading caller info")
