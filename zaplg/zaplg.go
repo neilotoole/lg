@@ -157,7 +157,7 @@ func timeEncoder(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
 
 // TestingFactoryFn can be passed to testlg.NewWith to
 // use zap as the backing impl.
-var TestingFactoryFn = func(w io.Writer) lg.Log {
+var TestingFactoryFn = func(w io.Writer) lg.Log { //nolint:gochecknoglobals // needs to be modifiable
 	// caller arg is false because testing.T will
 	// report the caller anyway.
 	return NewWith(w, testingFormat, true, true, true, 1)

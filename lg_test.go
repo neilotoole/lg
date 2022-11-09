@@ -22,7 +22,7 @@ func TestDiscard(t *testing.T) {
 
 // TestImplsOutput verifies that the implementations of lg.Log
 // output expected log entry text.
-func TestImplsOutput(t *testing.T) {
+func TestImplsOutput(t *testing.T) { //nolint:gocognit
 	const filename = "lg_test.go"
 
 	var lineParts = [][]string{
