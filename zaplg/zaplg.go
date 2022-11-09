@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"golang.org/x/crypto/ssh/terminal"
+	"golang.org/x/term"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -60,12 +60,12 @@ func NewWith(w io.Writer, format string, timestamp, level, caller bool, addCalle
 		encoderCfg.LevelKey = "level"
 	}
 
-	term := isTerminal(w)
+	isTerm := isTerminal(w)
 
 	switch {
-	case term && format == textFormat, term && format == testingFormat:
+	case isTerm && format == textFormat, isTerm && format == testingFormat:
 		encoderCfg.EncodeLevel = zapcore.CapitalColorLevelEncoder
-	case term:
+	case isTerm:
 		encoderCfg.EncodeLevel = zapcore.LowercaseColorLevelEncoder
 	case format == textFormat, format == testingFormat:
 		encoderCfg.EncodeLevel = zapcore.CapitalLevelEncoder
@@ -145,7 +145,7 @@ func (l *Log) WarnIfCloseError(c io.Closer) {
 func isTerminal(w io.Writer) bool {
 	switch v := w.(type) {
 	case *os.File:
-		return terminal.IsTerminal(int(v.Fd()))
+		return term.IsTerminal(int(v.Fd()))
 	default:
 		return false
 	}
@@ -182,9 +182,9 @@ func FuncCallerEncoder(caller zapcore.EntryCaller, enc zapcore.PrimitiveArrayEnc
 	enc.AppendString(caller.TrimmedPath() + ":" + s)
 }
 
-// FuncCallerEncoder serializes the caller in package.func format.
+// TestingCallerEncoder serializes the caller in package.func format.
 // This is especially useful when working with the testing
-// framework, t.Log etc already report file:line.
+// framework: t.Log etc already report file:line.
 // This implementation is probably not very efficient, so
 // use with caution.
 func TestingCallerEncoder(caller zapcore.EntryCaller, enc zapcore.PrimitiveArrayEncoder) {
