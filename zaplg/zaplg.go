@@ -49,7 +49,7 @@ func timeEncoderOfLayout(layout string, utc bool) zapcore.TimeEncoder {
 // true and utc is also true, the timestamp is displayed in UTC time.
 // The addCallerSkip param is used to adjust the frame
 // reported as the caller.
-func NewWith(w io.Writer, format string, timestamp bool, utc bool, level bool, caller bool, addCallerSkip int) *Log {
+func NewWith(w io.Writer, format string, timestamp, utc, level, caller bool, addCallerSkip int) *Log {
 	encoderCfg := zapcore.EncoderConfig{
 		MessageKey:     "message",
 		EncodeDuration: zapcore.StringDurationEncoder,

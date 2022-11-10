@@ -32,7 +32,7 @@ func DoSomething(log lg.Log) error {
 
 ```go
 // Or using uber/zap adapter with options
-log := zaplg.NewWith(os.Stdout, "json", true, true, true, 0)
+log := zaplg.NewWith(os.Stdout, "json", true, true, true, true, 0)
 
 log.Debug("hello world")
 log.Warnf("not %s at all", "good")
