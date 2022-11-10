@@ -3,7 +3,7 @@
 // It is not suggested for production use.
 //
 // This pkg does not itself perform logging. A concrete impl
-// must be used, e.g. loglg.New or zaplg.New. Use testlg.New
+// must be used, e.g. zaplg.New. Use testlg.New
 // to adapt lg to output to a testing.T.
 package lg
 

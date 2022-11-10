@@ -31,7 +31,7 @@ func DoSomething(log lg.Log) error {
 ## Quick Start
 
 ```go
-// Or using uber/zap adapter with options
+// Use uber/zap adapter with options
 log := zaplg.NewWith(os.Stdout, "json", true, true, true, true, 0)
 
 log.Debug("hello world")
@@ -79,7 +79,7 @@ provides convenience methods for this scenario.
 Additionally, `lg` demonstrates the separation of a logging interface
 from concrete implementations. Note that `lg` itself doesn't perform rendering
 of log entries: this is left to a backing log library. Implementations can be
-found in `lg/loglg`,`lg/zaplg` and `lg/testlg`. The `testlg` impl is used in
+found in `lg/zaplg` and `lg/testlg`. The `testlg` impl is used in
 conjunction with Go's testing framework. If using `zap`, `testlg` has 
 [benefits](#zaptest) over `zaptest`.
 

@@ -42,7 +42,7 @@ import (
 //
 //	// Use loglg as the log implementation.
 //	testlg.FactoryFn = func(w io.Writer) lg.Log {
-//	  return loglg.NewWith(w, true, true, false)
+//	  return otherimpl.NewWith(w, true, true, false)
 //	}
 var FactoryFn = zaplg.TestingFactoryFn
 
