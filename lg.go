@@ -10,7 +10,8 @@ package lg
 import "io"
 
 // Log is a logging interface that adds WarnIf methods
-// to the basic Debug, Warn and Error methods.
+// to the basic Debug, Warn and Error methods. The methods
+// of Log are safe for concurrent use.
 //
 // Style note: Being that Log is an interface, idiomatically
 // the type name should be Logger. But the sense is that
@@ -19,16 +20,16 @@ import "io"
 // of lg.Logger vs lg.Log constitutes a horde.
 type Log interface {
 	// Debug logs at DEBUG level.
-	Debug(a ...interface{})
+	Debug(a ...any)
 
 	// Debugf logs at DEBUG level.
-	Debugf(format string, a ...interface{})
+	Debugf(format string, a ...any)
 
 	// Warn logs at WARN level.
-	Warn(a ...interface{})
+	Warn(a ...any)
 
 	// Warnf logs at WARN level.
-	Warnf(format string, a ...interface{})
+	Warnf(format string, a ...any)
 
 	// WarnIfError is no-op if err is nil; if non-nil, err
 	// is logged at WARN level.
@@ -52,10 +53,34 @@ type Log interface {
 	WarnIfCloseError(c io.Closer)
 
 	// Error logs at ERROR level.
-	Error(a ...interface{})
+	Error(a ...any)
 
 	// Errorf logs at ERROR level.
-	Errorf(format string, a ...interface{})
+	Errorf(format string, a ...any)
+
+	// With returns a child Log instance that has a structured
+	// field key with val.
+	With(key string, val any) Log
+}
+
+// addCallerSkipper is an optional interface that Log impls
+// can implement to support additional caller skip.
+type addCallerSkipper interface {
+	AddCallerSkip(skip int) Log
+}
+
+// AddCallerSkip adds caller skip to log. If the log impl does
+// not support additional caller skip, log is returned unchanged.
+func AddCallerSkip(log Log, skip int) Log {
+	if log == nil {
+		return nil
+	}
+
+	if skipper, ok := log.(addCallerSkipper); ok {
+		log = skipper.AddCallerSkip(skip)
+	}
+
+	return log
 }
 
 // Discard returns a Log whose methods are no-op.
@@ -66,16 +91,16 @@ func Discard() Log {
 type discardLog struct {
 }
 
-func (discardLog) Debug(a ...interface{}) {
+func (discardLog) Debug(a ...any) {
 }
 
-func (discardLog) Debugf(format string, a ...interface{}) {
+func (discardLog) Debugf(format string, a ...any) {
 }
 
-func (discardLog) Warn(a ...interface{}) {
+func (discardLog) Warn(a ...any) {
 }
 
-func (discardLog) Warnf(format string, a ...interface{}) {
+func (discardLog) Warnf(format string, a ...any) {
 }
 
 func (discardLog) WarnIfError(err error) {
@@ -93,8 +118,12 @@ func (discardLog) WarnIfCloseError(c io.Closer) {
 	}
 }
 
-func (discardLog) Error(a ...interface{}) {
+func (discardLog) Error(a ...any) {
 }
 
-func (discardLog) Errorf(format string, a ...interface{}) {
+func (discardLog) Errorf(format string, a ...any) {
+}
+
+func (discardLog) With(key string, val any) Log {
+	return discardLog{}
 }

@@ -11,13 +11,30 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/neilotoole/lg"
-	"github.com/neilotoole/lg/loglg"
+	"github.com/neilotoole/lg/testlg"
 	"github.com/neilotoole/lg/zaplg"
 )
 
 func TestDiscard(t *testing.T) {
 	log := lg.Discard()
 	logItAll(log)
+}
+
+// TestLog is a smoke test of Log impls. Basically
+// the test exists to verify that nothing explodes. The
+// test does not verify that the output is correct.
+func TestLog(t *testing.T) {
+	t.Run("testlg", func(t *testing.T) {
+		log := testlg.New(t)
+		logItAll(log)
+	})
+
+	t.Run("zaplg", func(t *testing.T) {
+		buf := &bytes.Buffer{}
+		zlog := zaplg.NewWith(buf, "json", true, true, true, 0)
+		logItAll(zlog)
+		t.Log(buf.String())
+	})
 }
 
 // TestImplsOutput verifies that the implementations of lg.Log
@@ -53,9 +70,6 @@ func TestImplsOutput(t *testing.T) { //nolint:gocognit
 		name  string
 		newFn func(w io.Writer, level, caller bool) lg.Log
 	}{
-		{"loglg", func(w io.Writer, level, caller bool) lg.Log {
-			return loglg.NewWith(w, false, level, caller)
-		}},
 		{"zaplg", func(w io.Writer, level, caller bool) lg.Log {
 			return zaplg.NewWith(w, "text", false, level, caller, 0)
 		}},

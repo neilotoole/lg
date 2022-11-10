@@ -4,9 +4,9 @@ import (
 	"errors"
 	"io"
 	"testing"
+	"time"
 
 	"github.com/neilotoole/lg"
-	"github.com/neilotoole/lg/loglg"
 	"github.com/neilotoole/lg/testlg"
 	"github.com/neilotoole/lg/zaplg"
 )
@@ -35,7 +35,7 @@ func TestFactoryFn(t *testing.T) {
 	defer func() { testlg.FactoryFn = prevFn }()
 
 	testlg.FactoryFn = func(w io.Writer) lg.Log {
-		return loglg.NewWith(w, true, true, false)
+		return zaplg.NewWith(w, time.RFC3339, true, true, false, 0)
 	}
 
 	log := testlg.New(t)
