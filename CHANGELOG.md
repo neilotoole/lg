@@ -30,4 +30,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 [v2.0.0]: https://github.com/neilotoole/lg/compare/v1.0.0...v2.0.0
-[v1.0.0]: https://github.com/neilotoole/lg/releases/tag/v0.2.0
+[v1.0.0]: https://github.com/neilotoole/lg/releases/tag/v1.0.0
