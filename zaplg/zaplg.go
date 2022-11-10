@@ -8,6 +8,7 @@ import (
 	"runtime"
 	"strings"
 	"sync"
+	"time"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -27,15 +28,28 @@ const rfc3339Milli = "2006-01-02T15:04:05.000Z07:00"
 // New returns a Log that writes to os.Stdout
 // in text format, reporting the timestamp, level, and caller.
 func New() *Log {
-	return NewWith(os.Stdout, textFormat, true, true, true, 0)
+	return NewWith(os.Stdout, textFormat, true, true, true, true, 0)
+}
+
+// timeEncoderOfLayout returns TimeEncoder which serializes a time.Time using
+// given layout. If arg utc is true, the time is always converted to UTC.
+func timeEncoderOfLayout(layout string, utc bool) zapcore.TimeEncoder {
+	timeEncoderFn := zapcore.TimeEncoderOfLayout(layout)
+	return func(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
+		if utc {
+			t = t.UTC()
+		}
+		timeEncoderFn(t, enc)
+	}
 }
 
 // NewWith returns a Log that writes to w. Format should be one
 // of "json", "text", or "testing"; defaults to "text". The timestamp, level
-// and caller params determine if those fields are reported.
+// and caller params determine if those fields are reported. If timestamp is
+// true and utc is also true, the timestamp is displayed in UTC time.
 // The addCallerSkip param is used to adjust the frame
 // reported as the caller.
-func NewWith(w io.Writer, format string, timestamp, level, caller bool, addCallerSkip int) *Log {
+func NewWith(w io.Writer, format string, timestamp, utc, level, caller bool, addCallerSkip int) *Log {
 	encoderCfg := zapcore.EncoderConfig{
 		MessageKey:     "message",
 		EncodeDuration: zapcore.StringDurationEncoder,
@@ -52,7 +66,7 @@ func NewWith(w io.Writer, format string, timestamp, level, caller bool, addCalle
 
 	if timestamp {
 		encoderCfg.TimeKey = "timestamp"
-		encoderCfg.EncodeTime = zapcore.TimeEncoderOfLayout(rfc3339Milli)
+		encoderCfg.EncodeTime = timeEncoderOfLayout(rfc3339Milli, utc)
 	}
 
 	if level {
@@ -211,7 +225,7 @@ func (l *Log) With(key string, val any) lg.Log {
 var TestingFactoryFn = func(w io.Writer) lg.Log {
 	// caller arg is false because testing.T will
 	// report the caller anyway.
-	return NewWith(w, testingFormat, true, true, true, 1)
+	return NewWith(w, testingFormat, true, true, true, true, 1)
 }
 
 // funcCallerEncoder extends the behavior of zapcore.ShortCallerEncoder

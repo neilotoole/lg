@@ -56,7 +56,7 @@ func TestNewWith(t *testing.T) {
 		name := fmt.Sprintf("%s__timestamp_%v__level_%v__caller_%v", tc.format, tc.timestamp, tc.level, tc.caller)
 		t.Run(name, func(t *testing.T) {
 			log := testlg.NewWith(t, func(w io.Writer) lg.Log {
-				return zaplg.NewWith(w, tc.format, tc.timestamp, tc.level, tc.caller, 1)
+				return zaplg.NewWith(w, tc.format, tc.timestamp, true, tc.level, tc.caller, 1)
 			})
 
 			logItAll(log)
@@ -82,7 +82,7 @@ the testing framework (misleading) vs zap itself (desired)`)
 
 	t.Log("testlg -- Observe the concurring caller info reported by the testing framework and zap itself")
 	factoryFn := func(w io.Writer) lg.Log {
-		return zaplg.NewWith(w, "text", true, true, true, 1)
+		return zaplg.NewWith(w, "text", true, true, true, true, 1)
 	}
 	log := testlg.NewWith(t, factoryFn)
 	log.Debugf("accurate caller info")
