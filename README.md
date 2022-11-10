@@ -34,6 +34,9 @@ func DoSomething(log lg.Log) error {
 // Use uber/zap adapter with options
 log := zaplg.NewWith(os.Stdout, "json", true, true, true, true, 0)
 
+// Add a field to the log
+log = log.With("request_id", 12345)
+
 log.Debug("hello world")
 log.Warnf("not %s at all", "good")
 log.Error(err)
