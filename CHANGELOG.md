@@ -11,6 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The `lg.Log` interface now has `With` methods for structured logging.
 
+### Changed
+
+- `zaplg.NewWith` now accepts a `utc` bool arg. When true, the timestamp
+   is rendered in UTC time.
+
 ### Removed
 
 - `loglg` (stdlib `log`) support has been removed. It's not worth maintaining this
@@ -25,4 +30,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 [v2.0.0]: https://github.com/neilotoole/lg/compare/v1.0.0...v2.0.0
-[v1.0.0]: https://github.com/neilotoole/lg/releases/tag/v0.0.3
+[v1.0.0]: https://github.com/neilotoole/lg/releases/tag/v0.2.0

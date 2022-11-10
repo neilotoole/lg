@@ -31,7 +31,7 @@ func TestLog(t *testing.T) {
 
 	t.Run("zaplg", func(t *testing.T) {
 		buf := &bytes.Buffer{}
-		zlog := zaplg.NewWith(buf, "json", true, true, true, 0)
+		zlog := zaplg.NewWith(buf, "json", true, true, true, true, 0)
 		logItAll(zlog)
 		t.Log(buf.String())
 	})
@@ -71,7 +71,7 @@ func TestImplsOutput(t *testing.T) { //nolint:gocognit
 		newFn func(w io.Writer, level, caller bool) lg.Log
 	}{
 		{"zaplg", func(w io.Writer, level, caller bool) lg.Log {
-			return zaplg.NewWith(w, "text", false, level, caller, 0)
+			return zaplg.NewWith(w, "text", false, true, level, caller, 0)
 		}},
 	}
 
