@@ -45,10 +45,6 @@ func timeEncoderOfLayout(layout string, utc bool) zapcore.TimeEncoder {
 
 // NewWith returns a Log that writes to w. Format should be one
 // of "json", "text", or "testing"; defaults to "text". The timestamp, level
-// and caller params determine if those fields are reported. If timestamp is
-// true and utc is also true, the timestamp is displayed in UTC time.
-// The addCallerSkip param is used to adjust the frame
-// reported as the caller.
 func NewWith(w io.Writer, format string, timestamp bool, utc bool, level bool, caller bool, addCallerSkip int) *Log {
 	encoderCfg := zapcore.EncoderConfig{
 		MessageKey:     "message",
@@ -66,7 +62,7 @@ func NewWith(w io.Writer, format string, timestamp bool, utc bool, level bool, c
 
 	if timestamp {
 		encoderCfg.TimeKey = "timestamp"
-		encoderCfg.EncodeTime = timeEncoderOfLayout(rfc3339Milli, true)
+		encoderCfg.EncodeTime = timeEncoderOfLayout(rfc3339Milli, utc)
 	}
 
 	if level {

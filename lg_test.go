@@ -31,6 +31,7 @@ func TestLog(t *testing.T) {
 
 	t.Run("zaplg", func(t *testing.T) {
 		buf := &bytes.Buffer{}
+
 		zlog := zaplg.NewWith(buf, "json", true, true, true, true, 0)
 		logItAll(zlog)
 		t.Log(buf.String())
