@@ -6,7 +6,6 @@ import (
 	"io"
 	"testing"
 
-	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zaptest"
 
@@ -63,14 +62,6 @@ func TestNewWith(t *testing.T) {
 			logItAll(log)
 		})
 	}
-}
-
-func TestNewWithZap(t *testing.T) {
-	logger, err := zap.NewDevelopment()
-	require.NoError(t, err)
-
-	log := zaplg.NewWithZap(logger)
-	logItAll(log)
 }
 
 func TestTestingFactoryFn(t *testing.T) {

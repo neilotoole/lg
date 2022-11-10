@@ -20,24 +20,6 @@
 //	    testlg_test.go:65: 09:48:38.849215 	WARN 	Hello Mars
 //	    testlg_test.go:66: 09:48:38.849304 	ERROR	Hello Venus
 //
-// Log has a "strict" mode which pipes Error and Errorf output
-// to t.Error instead of t.Log, resulting in test failure. This:
-//
-//	func TestMe(t *testing.T) {
-//	  log := testlg.New(t).Strict(true)
-//	  log.Debug("Hello World")
-//	  log.Warn("Hello Mars")
-//	  log.Error("Hello Venus") // pipes to t.Error, resulting in test failure
-//	}
-//
-// produces:
-//
-//	=== RUN   TestMe
-//	--- FAIL: TestMe (0.00s)
-//	    testlg_test.go:64: 09:52:28.706482 	DEBUG	Hello World
-//	    testlg_test.go:65: 09:52:28.706591 	WARN 	Hello Mars
-//	    testlg_test.go:66: 09:52:28.706599 	ERROR	Hello Venus
-//
 // This Log type does not itself generate log messages: this is
 // delegated to a backing log impl (zaplg by default).
 // An alternative impl can be set by passing a log factory func
@@ -47,7 +29,6 @@ package testlg
 import (
 	"bytes"
 	"io"
-	"strings"
 	"sync"
 	"testing"
 
@@ -57,26 +38,36 @@ import (
 
 // FactoryFn is used by New to create the backing Log impl.
 // By default this func uses zaplg, but other impls
-// can be used as follows:
+// could be used as follows:
 //
 //	// Use loglg as the log implementation.
 //	testlg.FactoryFn = func(w io.Writer) lg.Log {
 //	  return loglg.NewWith(w, true, true, false)
 //	}
-var FactoryFn = zaplg.TestingFactoryFn //nolint:gochecknoglobals // needed
+var FactoryFn = zaplg.TestingFactoryFn
 
 // Log implements lg.Log, but directs its output to
-// the logging functions of testing.T.
+// the logging functions of testing.T. This is implemented
+// by having Log's underlying log impl writer to a buffer, and
+// then the bytes of the buffer are passed to t.Log. The advantage
+// of this approach is that Log maintains control over the
+// calldepth when t.Log is invoked, thus t.Log outputs the
+// correct caller information. Notably The uber/zap library's own
+// testing.T wrapper results in t.Log outputting incorrect caller
+// info (and this can't be fixed, because t.Helper only adjusts the
+// calldepth by 1, which is insufficient given zap's structure).
 type Log struct {
-	t      testing.TB
-	strict bool
-	impl   lg.Log
-	buf    bytes.Buffer
-	mu     sync.Mutex
+	t    testing.TB
+	mu   sync.Mutex
+	impl lg.Log
+	buf  *bytes.Buffer
+
+	factoryFn func(writer io.Writer) lg.Log
+	kvs       []keyVal
 }
 
 // New returns a log that pipes output to t.
-func New(t testing.TB) *Log {
+func New(t testing.TB) lg.Log {
 	return NewWith(t, FactoryFn)
 }
 
@@ -84,66 +75,60 @@ func New(t testing.TB) *Log {
 // the backing lg.Log instances returned by factoryFn
 // to generate log messages.
 func NewWith(t testing.TB, factoryFn func(io.Writer) lg.Log) *Log {
-	tl := &Log{t: t}
-	tl.impl = factoryFn(&tl.buf)
+	tl := &Log{t: t, buf: &bytes.Buffer{}, factoryFn: factoryFn}
+	tl.impl = factoryFn(tl.buf)
 	return tl
 }
 
-// Strict sets strict mode. When in strict mode, Errorf logs
-// via t.Error instead of t.Log, thus resulting in test failure.
-func (l *Log) Strict(strict bool) *Log {
-	l.strict = strict
-	return l
-}
-
 // Debug logs at DEBUG level to t.Log.
-func (l *Log) Debug(a ...interface{}) {
+func (l *Log) Debug(a ...any) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 
 	l.impl.Debug(a...)
-	output, _ := io.ReadAll(&l.buf)
 
 	l.t.Helper()
-	l.t.Log(stripNewLineEnding(string(output)))
+	l.t.Log(string(stripNewLineEnding(l.buf.Bytes())))
+	l.buf.Reset()
 }
 
 // Debugf logs at DEBUG level to t.Log.
-func (l *Log) Debugf(format string, a ...interface{}) {
+func (l *Log) Debugf(format string, a ...any) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 
 	l.impl.Debugf(format, a...)
-	output, _ := io.ReadAll(&l.buf)
 
 	l.t.Helper()
-	l.t.Log(stripNewLineEnding(string(output)))
+	l.t.Log(string(stripNewLineEnding(l.buf.Bytes())))
+	l.buf.Reset()
 }
 
-// Warn logs at WARN level to t.Log.
-func (l *Log) Warn(a ...interface{}) {
+// Warn implements Log.Warn.
+func (l *Log) Warn(a ...any) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 
 	l.impl.Warn(a...)
-	output, _ := io.ReadAll(&l.buf)
 
 	l.t.Helper()
-	l.t.Log(stripNewLineEnding(string(output)))
+	l.t.Log(string(stripNewLineEnding(l.buf.Bytes())))
+	l.buf.Reset()
 }
 
-// Warnf logs at WARN level to t.Log.
-func (l *Log) Warnf(format string, a ...interface{}) {
+// Warnf implements Log.Warnf.
+func (l *Log) Warnf(format string, a ...any) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 
 	l.impl.Warnf(format, a...)
-	output, _ := io.ReadAll(&l.buf)
 
 	l.t.Helper()
-	l.t.Log(stripNewLineEnding(string(output)))
+	l.t.Log(string(stripNewLineEnding(l.buf.Bytes())))
+	l.buf.Reset()
 }
 
+// WarnIfError implements Log.WarnIfError.
 func (l *Log) WarnIfError(err error) {
 	if err == nil {
 		return
@@ -153,12 +138,13 @@ func (l *Log) WarnIfError(err error) {
 	defer l.mu.Unlock()
 
 	l.impl.Warn(err)
-	output, _ := io.ReadAll(&l.buf)
 
 	l.t.Helper()
-	l.t.Log(stripNewLineEnding(string(output)))
+	l.t.Log(string(stripNewLineEnding(l.buf.Bytes())))
+	l.buf.Reset()
 }
 
+// WarnIfFuncError implements Log.WarnIfFuncError.
 func (l *Log) WarnIfFuncError(fn func() error) {
 	if fn == nil {
 		return
@@ -173,12 +159,13 @@ func (l *Log) WarnIfFuncError(fn func() error) {
 	defer l.mu.Unlock()
 
 	l.impl.Warn(err)
-	output, _ := io.ReadAll(&l.buf)
+	output, _ := io.ReadAll(l.buf)
 
 	l.t.Helper()
-	l.t.Log(stripNewLineEnding(string(output)))
+	l.t.Log(string(stripNewLineEnding(output)))
 }
 
+// WarnIfCloseError implements Log.WarnIfCloseError.
 func (l *Log) WarnIfCloseError(c io.Closer) {
 	if c == nil {
 		return
@@ -193,51 +180,96 @@ func (l *Log) WarnIfCloseError(c io.Closer) {
 	defer l.mu.Unlock()
 
 	l.impl.Warn(err)
-	output, _ := io.ReadAll(&l.buf)
+	output, _ := io.ReadAll(l.buf)
 
 	l.t.Helper()
-	l.t.Log(stripNewLineEnding(string(output)))
+	l.t.Log(string(stripNewLineEnding(output)))
 }
 
-// Error logs at ERROR level to t.Log, or if in strict mode,
-// the message is logged via t.Error, resulting in test failure.
-func (l *Log) Error(a ...interface{}) {
+// Error implements Log.Error.
+func (l *Log) Error(a ...any) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 
 	l.impl.Error(a...)
-	output, _ := io.ReadAll(&l.buf)
+	output, _ := io.ReadAll(l.buf)
 
 	l.t.Helper()
-
-	if l.strict {
-		l.t.Error(stripNewLineEnding(string(output)))
-	} else {
-		l.t.Log(stripNewLineEnding(string(output)))
-	}
+	l.t.Log(string(stripNewLineEnding(output)))
 }
 
-// Errorf logs at ERROR level to t.Log, or if in strict mode,
-// the message is logged via t.Error, resulting in test failure.
-func (l *Log) Errorf(format string, v ...interface{}) {
+// Errorf implements Log.Errorf.
+func (l *Log) Errorf(format string, v ...any) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 
 	l.impl.Errorf(format, v...)
-	output, _ := io.ReadAll(&l.buf)
+	output, _ := io.ReadAll(l.buf)
 
 	l.t.Helper()
+	l.t.Log(string(stripNewLineEnding(output)))
+}
 
-	if l.strict {
-		l.t.Error(stripNewLineEnding(string(output)))
-	} else {
-		l.t.Log(stripNewLineEnding(string(output)))
+// With implements Log.With.
+func (l *Log) With(key string, val any) lg.Log {
+	// We want to prevent duplicate keys. The below code
+	// results in a []keyVal without duplicate keys.
+
+	keyIndex := -1
+	for i, kv := range l.kvs {
+		if kv.k == key {
+			keyIndex = i
+			break
+		}
 	}
+
+	var kvs []keyVal
+	if keyIndex == -1 {
+		// Key does not exist.
+		kvs = make([]keyVal, len(l.kvs)+1)
+		copy(kvs, l.kvs)
+		kvs[len(kvs)-1] = keyVal{k: key, v: val}
+	} else {
+		// Key does exists. We make a copy of l.kvs and set
+		// the val for the existing key.
+		kvs = make([]keyVal, len(l.kvs))
+		copy(kvs, l.kvs)
+		kvs[keyIndex].v = val
+	}
+
+	// Create a new log instance, and then add each
+	// of kvs using impl.With.
+	buf := &bytes.Buffer{}
+	impl := l.factoryFn(buf)
+	for _, kv := range kvs {
+		impl = impl.With(kv.k, kv.v)
+	}
+
+	return &Log{
+		t:         l.t,
+		impl:      impl,
+		buf:       buf,
+		factoryFn: l.factoryFn,
+		kvs:       kvs,
+	}
+}
+
+type keyVal struct {
+	k string
+	v any
 }
 
 // stripNewLineEnding strips the trailing newline from
 // the output generated by Log impls (which typically add
 // a newline).
-func stripNewLineEnding(s string) string {
-	return strings.TrimSuffix(s, "\n")
+func stripNewLineEnding(b []byte) []byte {
+	if len(b) == 0 {
+		return b
+	}
+
+	if b[len(b)-1] == '\n' {
+		b = b[:len(b)-1]
+	}
+
+	return b
 }
