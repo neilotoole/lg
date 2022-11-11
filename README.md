@@ -331,5 +331,6 @@ to accurately report the caller.
 
 ## Acknowledgements
 
+- [golang-ci](https://golangci-lint.run) team, for the linter.
 - The Uber team, for [zap](https://github.com/uber-go/zap).
-- [marwan-at-work](https://github.com/marwan-at-work), for the [mod](https://github.com/marwan-at-work/mod) tool to easily upgrade to `v2`.
+- [marwan-at-work](https://github.com/marwan-at-work), for the [mod](https://github.com/marwan-at-work/mod) tool to easily upgrade to `v2+`.
