@@ -13,7 +13,7 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 
-	"github.com/neilotoole/lg"
+	"github.com/neilotoole/lg/v2"
 )
 
 const (

@@ -3,7 +3,7 @@ package lg_test
 import (
 	"os"
 
-	"github.com/neilotoole/lg/zaplg"
+	"github.com/neilotoole/lg/v2/zaplg"
 )
 
 // Demonstrate use with uber/zap.
