@@ -10,9 +10,9 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/neilotoole/lg"
-	"github.com/neilotoole/lg/testlg"
-	"github.com/neilotoole/lg/zaplg"
+	"github.com/neilotoole/lg/v2"
+	"github.com/neilotoole/lg/v2/testlg"
+	"github.com/neilotoole/lg/v2/zaplg"
 )
 
 func TestDiscard(t *testing.T) {

@@ -9,9 +9,9 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zaptest"
 
-	"github.com/neilotoole/lg"
-	"github.com/neilotoole/lg/testlg"
-	"github.com/neilotoole/lg/zaplg"
+	"github.com/neilotoole/lg/v2"
+	"github.com/neilotoole/lg/v2/testlg"
+	"github.com/neilotoole/lg/v2/zaplg"
 )
 
 var _ lg.Log = (*zaplg.Log)(nil)

@@ -1,5 +1,5 @@
 ![Actions Status](https://github.com/neilotoole/lg/workflows/Go/badge.svg)
-[![release](https://img.shields.io/badge/release-v0.3.0-green.svg)](https://github.com/neilotoole/errgroup/releases/tag/v0.3.0)
+[![release](https://img.shields.io/badge/release-v2.0.0-green.svg)](https://github.com/neilotoole/errgroup/releases/tag/v2.0.0)
 [![GoDoc](https://godoc.org/github.com/golang/gddo?status.svg)](https://pkg.go.dev/github.com/neilotoole/lg)
 [![license](https://img.shields.io/github/license/neilotoole/lg)](./LICENSE)
 
@@ -26,7 +26,7 @@ func DoSomething(log lg.Log) error {
 
 ## Installation
 
-`go get -u github.com/neilotoole/lg`
+`go get -u github.com/neilotoole/lg/v2`
 
 ## Quick Start
 
@@ -328,3 +328,9 @@ output incorrect caller information. The test output from  [`TestZapTestVsTestLg
 Note `line 4`, where `testing` reports `logger.go:130` as the caller, while `zap` itself
 reports the correct caller (`zaplg/zaplg_test.go:70`). In contrast, `testlg` causes `testing`
 to accurately report the caller.
+
+## Acknowledgements
+
+- [golang-ci](https://golangci-lint.run) team, for the linter.
+- The Uber team, for [zap](https://github.com/uber-go/zap).
+- [marwan-at-work](https://github.com/marwan-at-work), for the [mod](https://github.com/marwan-at-work/mod) tool to easily upgrade to `v2+`.

@@ -1,4 +1,4 @@
-module github.com/neilotoole/lg
+module github.com/neilotoole/lg/v2
 
 go 1.19
 
