@@ -3,7 +3,7 @@
 // It is not suggested for production use.
 //
 // This pkg does not itself perform logging. A concrete impl
-// must be used, e.g. zaplg.New. Use testlg.New
+// must be used, e.g. sloglg.New. Use testlg.New
 // to adapt lg to output to a testing.T.
 package lg
 
@@ -19,17 +19,11 @@ import "io"
 // is barbaric in and of itself, but a thousand appearances
 // of lg.Logger vs lg.Log constitutes a horde.
 type Log interface {
-	// Debug logs at DEBUG level.
-	Debug(a ...any)
-
 	// Debugf logs at DEBUG level.
-	Debugf(format string, a ...any)
-
-	// Warn logs at WARN level.
-	Warn(a ...any)
+	Debugf(msg string, args ...any)
 
 	// Warnf logs at WARN level.
-	Warnf(format string, a ...any)
+	Warnf(msg string, args ...any)
 
 	// WarnIfError is no-op if err is nil; if non-nil, err
 	// is logged at WARN level.
@@ -52,11 +46,8 @@ type Log interface {
 	//  log.WarnIfFuncError(c.Close) // panic
 	WarnIfCloseError(c io.Closer)
 
-	// Error logs at ERROR level.
-	Error(a ...any)
-
 	// Errorf logs at ERROR level.
-	Errorf(format string, a ...any)
+	Errorf(msg string, args ...any)
 
 	// With returns a child Log instance that has a structured
 	// field key with val.

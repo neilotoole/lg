@@ -1,9 +1,11 @@
-package zaplg_test
+package sloglg_test
 
 import (
 	"errors"
 	"fmt"
+	"github.com/neilotoole/lg/v2/sloglg"
 	"io"
+	"os"
 	"testing"
 
 	"go.uber.org/zap"
@@ -12,12 +14,22 @@ import (
 	"github.com/neilotoole/lg/v2"
 	"github.com/neilotoole/lg/v2/testlg"
 	"github.com/neilotoole/lg/v2/zaplg"
+	"golang.org/x/exp/slog"
 )
 
-var _ lg.Log = (*zaplg.Log)(nil)
+func TestSlog(t *testing.T) {
+	//slog.Info("huzzah")
+
+	textHandler := slog.NewTextHandler(os.Stdout)
+	logger := slog.New(textHandler)
+
+	logger.Info("Usage Statistics", slog.Int("current-memory", 50))
+}
+
+var _ lg.Log = (*sloglg.Log)(nil)
 
 func TestNew(t *testing.T) {
-	log := zaplg.New()
+	log := sloglg.New()
 	logItAll(log)
 }
 
@@ -92,8 +104,11 @@ the testing framework (misleading) vs zap itself (desired)`)
 
 // logItAll executes all the methods of lg.Log.
 func logItAll(log lg.Log) {
+	log.Debug("Debug msg")
 	log.Debugf("Debugf msg")
+	log.Warn("Warn msg")
 	log.Warnf("Warnf msg")
+	log.Error("Error msg")
 	log.Errorf("Errorf msg")
 
 	log.WarnIfError(nil)

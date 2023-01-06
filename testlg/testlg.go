@@ -37,7 +37,7 @@ import (
 )
 
 // FactoryFn is used by New to create the backing Log impl.
-// By default this func uses zaplg, but other impls
+// By default, this func uses zaplg, but other impls
 // could be used as follows:
 //
 //	// Use loglg as the log implementation.
@@ -80,36 +80,12 @@ func NewWith(t testing.TB, factoryFn func(io.Writer) lg.Log) *Log {
 	return tl
 }
 
-// Debug logs at DEBUG level to t.Log.
-func (l *Log) Debug(a ...any) {
-	l.mu.Lock()
-	defer l.mu.Unlock()
-
-	l.impl.Debug(a...)
-
-	l.t.Helper()
-	l.t.Log(string(stripNewLineEnding(l.buf.Bytes())))
-	l.buf.Reset()
-}
-
 // Debugf logs at DEBUG level to t.Log.
 func (l *Log) Debugf(format string, a ...any) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 
 	l.impl.Debugf(format, a...)
-
-	l.t.Helper()
-	l.t.Log(string(stripNewLineEnding(l.buf.Bytes())))
-	l.buf.Reset()
-}
-
-// Warn implements Log.Warn.
-func (l *Log) Warn(a ...any) {
-	l.mu.Lock()
-	defer l.mu.Unlock()
-
-	l.impl.Warn(a...)
 
 	l.t.Helper()
 	l.t.Log(string(stripNewLineEnding(l.buf.Bytes())))
@@ -137,7 +113,7 @@ func (l *Log) WarnIfError(err error) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 
-	l.impl.Warn(err)
+	l.impl.Warnf(err.Error())
 
 	l.t.Helper()
 	l.t.Log(string(stripNewLineEnding(l.buf.Bytes())))
@@ -158,7 +134,7 @@ func (l *Log) WarnIfFuncError(fn func() error) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 
-	l.impl.Warn(err)
+	l.impl.Warnf(err.Error())
 	output, _ := io.ReadAll(l.buf)
 
 	l.t.Helper()
@@ -179,19 +155,7 @@ func (l *Log) WarnIfCloseError(c io.Closer) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 
-	l.impl.Warn(err)
-	output, _ := io.ReadAll(l.buf)
-
-	l.t.Helper()
-	l.t.Log(string(stripNewLineEnding(output)))
-}
-
-// Error implements Log.Error.
-func (l *Log) Error(a ...any) {
-	l.mu.Lock()
-	defer l.mu.Unlock()
-
-	l.impl.Error(a...)
+	l.impl.Warnf(err.Error())
 	output, _ := io.ReadAll(l.buf)
 
 	l.t.Helper()
