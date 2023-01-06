@@ -68,7 +68,7 @@ func TestNewWith(t *testing.T) {
 		name := fmt.Sprintf("%s__timestamp_%v__level_%v__caller_%v", tc.format, tc.timestamp, tc.level, tc.caller)
 		t.Run(name, func(t *testing.T) {
 			log := testlg.NewWith(t, func(w io.Writer) lg.Log {
-				return zaplg.NewWith(w, tc.format, tc.timestamp, true, tc.level, tc.caller, 1)
+				return sloglg.NewWith(w, tc.format, tc.timestamp, true, tc.level, tc.caller, 1)
 			})
 
 			logItAll(log)
@@ -94,22 +94,22 @@ the testing framework (misleading) vs zap itself (desired)`)
 
 	t.Log("testlg -- Observe the concurring caller info reported by the testing framework and zap itself")
 	factoryFn := func(w io.Writer) lg.Log {
-		return zaplg.NewWith(w, "text", true, true, true, true, 1)
+		return sloglg.NewWith(w, "text", true, true, true, true, 1)
 	}
 	log := testlg.NewWith(t, factoryFn)
-	log.Debugf("accurate caller info")
-	log.Warnf("accurate caller info")
-	log.Errorf("accurate caller info")
+	log.Debug("accurate caller info")
+	log.Warn("accurate caller info")
+	log.Error("accurate caller info")
 }
 
 // logItAll executes all the methods of lg.Log.
 func logItAll(log lg.Log) {
 	log.Debug("Debug msg")
-	log.Debugf("Debugf msg")
+	log.Debug("Debug msg")
 	log.Warn("Warn msg")
-	log.Warnf("Warnf msg")
+	log.Warn("Warn msg")
 	log.Error("Error msg")
-	log.Errorf("Errorf msg")
+	log.Error("Error msg")
 
 	log.WarnIfError(nil)
 	log.WarnIfError(errors.New("error: WarnIfError msg"))

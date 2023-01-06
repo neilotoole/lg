@@ -45,11 +45,11 @@ func TestImplsOutput(t *testing.T) { //nolint:gocognit
 
 	var lineParts = [][]string{
 		{"DEBUG", "Debug msg"},
-		{"DEBUG", "Debugf msg"},
+		{"DEBUG", "Debug msg"},
 		{"WARN", "Warn msg"},
-		{"WARN", "Warnf msg"},
+		{"WARN", "Warn msg"},
 		{"ERROR", "Error msg"},
-		{"ERROR", "Errorf msg"},
+		{"ERROR", "Error msg"},
 		{"WARN", "WarnIfError msg"},
 		{"WARN", "error: WarnIfFuncError msg"},
 		{"WARN", "error: WarnIfCloseError msg"},
@@ -122,11 +122,11 @@ func TestImplsOutput(t *testing.T) { //nolint:gocognit
 // logItAll executes all the methods of lg.Log.
 func logItAll(log lg.Log) {
 	log.Debug("Debug msg")
-	log.Debugf("Debugf msg")
+	log.Debug("Debug msg")
 	log.Warn("Warn msg")
-	log.Warnf("Warnf msg")
+	log.Warn("Warn msg")
 	log.Error("Error msg")
-	log.Errorf("Errorf msg")
+	log.Error("Error msg")
 
 	log.WarnIfError(nil)
 	log.WarnIfError(errors.New("error: WarnIfError msg"))

@@ -53,11 +53,11 @@ func TestFactoryFn(t *testing.T) {
 // logItAll executes all the methods of lg.Log.
 func logItAll(log lg.Log) {
 	log.Debug("Debug msg")
-	log.Debugf("Debugf msg")
+	log.Debug("Debug msg")
 	log.Warn("Warn msg")
-	log.Warnf("Warnf msg")
+	log.Warn("Warn msg")
 	log.Error("Error msg")
-	log.Errorf("Errorf msg")
+	log.Error("Error msg")
 
 	log.WarnIfError(nil)
 	log.WarnIfError(errors.New("error: WarnIfError msg"))

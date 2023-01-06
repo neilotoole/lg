@@ -7,7 +7,7 @@
 //
 //	func TestMe(t *testing.T) {
 //	  log := testlg.New(t)
-//	  log.Debugf("Hello %s", "World")
+//	  log.Debug("Hello %s", "World")
 //	  log.Warn("Hello Mars")
 //	  log.Error("Hello Venus")
 //	}
@@ -81,11 +81,11 @@ func NewWith(t testing.TB, factoryFn func(io.Writer) lg.Log) *Log {
 }
 
 // Debugf logs at DEBUG level to t.Log.
-func (l *Log) Debugf(format string, a ...any) {
+func (l *Log) Debug(format string, a ...any) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 
-	l.impl.Debugf(format, a...)
+	l.impl.Debug(format, a...)
 
 	l.t.Helper()
 	l.t.Log(string(stripNewLineEnding(l.buf.Bytes())))
@@ -93,11 +93,11 @@ func (l *Log) Debugf(format string, a ...any) {
 }
 
 // Warnf implements Log.Warnf.
-func (l *Log) Warnf(format string, a ...any) {
+func (l *Log) Warn(format string, a ...any) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 
-	l.impl.Warnf(format, a...)
+	l.impl.Warn(format, a...)
 
 	l.t.Helper()
 	l.t.Log(string(stripNewLineEnding(l.buf.Bytes())))
@@ -113,7 +113,7 @@ func (l *Log) WarnIfError(err error) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 
-	l.impl.Warnf(err.Error())
+	l.impl.Warn(err.Error())
 
 	l.t.Helper()
 	l.t.Log(string(stripNewLineEnding(l.buf.Bytes())))
@@ -134,7 +134,7 @@ func (l *Log) WarnIfFuncError(fn func() error) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 
-	l.impl.Warnf(err.Error())
+	l.impl.Warn(err.Error())
 	output, _ := io.ReadAll(l.buf)
 
 	l.t.Helper()
@@ -155,7 +155,7 @@ func (l *Log) WarnIfCloseError(c io.Closer) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 
-	l.impl.Warnf(err.Error())
+	l.impl.Warn(err.Error())
 	output, _ := io.ReadAll(l.buf)
 
 	l.t.Helper()
@@ -163,11 +163,11 @@ func (l *Log) WarnIfCloseError(c io.Closer) {
 }
 
 // Errorf implements Log.Errorf.
-func (l *Log) Errorf(format string, v ...any) {
+func (l *Log) Error(format string, v ...any) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 
-	l.impl.Errorf(format, v...)
+	l.impl.Error(format, v...)
 	output, _ := io.ReadAll(l.buf)
 
 	l.t.Helper()

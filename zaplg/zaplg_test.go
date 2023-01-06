@@ -85,16 +85,16 @@ the testing framework (misleading) vs zap itself (desired)`)
 		return zaplg.NewWith(w, "text", true, true, true, true, 1)
 	}
 	log := testlg.NewWith(t, factoryFn)
-	log.Debugf("accurate caller info")
-	log.Warnf("accurate caller info")
-	log.Errorf("accurate caller info")
+	log.Debug("accurate caller info")
+	log.Warn("accurate caller info")
+	log.Error("accurate caller info")
 }
 
 // logItAll executes all the methods of lg.Log.
 func logItAll(log lg.Log) {
-	log.Debugf("Debugf msg")
-	log.Warnf("Warnf msg")
-	log.Errorf("Errorf msg")
+	log.Debug("Debug msg")
+	log.Warn("Warn msg")
+	log.Error("Error msg")
 
 	log.WarnIfError(nil)
 	log.WarnIfError(errors.New("error: WarnIfError msg"))

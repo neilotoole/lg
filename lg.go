@@ -19,11 +19,11 @@ import "io"
 // is barbaric in and of itself, but a thousand appearances
 // of lg.Logger vs lg.Log constitutes a horde.
 type Log interface {
-	// Debugf logs at DEBUG level.
-	Debugf(msg string, args ...any)
+	// Debug logs at DEBUG level.
+	Debug(msg string, args ...any)
 
-	// Warnf logs at WARN level.
-	Warnf(msg string, args ...any)
+	// Warn logs at WARN level.
+	Warn(msg string, args ...any)
 
 	// WarnIfError is no-op if err is nil; if non-nil, err
 	// is logged at WARN level.
@@ -46,8 +46,8 @@ type Log interface {
 	//  log.WarnIfFuncError(c.Close) // panic
 	WarnIfCloseError(c io.Closer)
 
-	// Errorf logs at ERROR level.
-	Errorf(msg string, args ...any)
+	// Error logs at ERROR level.
+	Error(msg string, args ...any)
 
 	// With returns a child Log instance that has a structured
 	// field key with val.
@@ -82,16 +82,10 @@ func Discard() Log {
 type discardLog struct {
 }
 
-func (discardLog) Debug(a ...any) {
+func (discardLog) Debug(format string, a ...any) {
 }
 
-func (discardLog) Debugf(format string, a ...any) {
-}
-
-func (discardLog) Warn(a ...any) {
-}
-
-func (discardLog) Warnf(format string, a ...any) {
+func (discardLog) Warn(format string, a ...any) {
 }
 
 func (discardLog) WarnIfError(err error) {
@@ -109,10 +103,7 @@ func (discardLog) WarnIfCloseError(c io.Closer) {
 	}
 }
 
-func (discardLog) Error(a ...any) {
-}
-
-func (discardLog) Errorf(format string, a ...any) {
+func (discardLog) Error(format string, a ...any) {
 }
 
 func (discardLog) With(key string, val any) Log {

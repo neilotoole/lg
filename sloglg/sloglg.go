@@ -23,7 +23,16 @@ var _ lg.Log = (*Log)(nil)
 // New returns a Log that writes to os.Stdout
 // in text format, reporting the timestamp, level, and caller.
 func New() *Log {
-	return NewWith(os.Stdout, textFormat, true, true, true, true, 0)
+	opts := slog.HandlerOptions{
+		AddSource:   true,
+		Level:       slog.LevelDebug,
+		ReplaceAttr: nil,
+	}
+
+	handler := opts.NewTextHandler(os.Stdout)
+	logger := slog.New(handler)
+
+	return &Log{Logger: logger}
 }
 
 // NewWith returns a Log that writes to w. Format should be one
@@ -33,6 +42,30 @@ func New() *Log {
 // The addCallerSkip param is used to adjust the frame
 // reported as the caller.
 func NewWith(w io.Writer, format string, timestamp, utc, level, caller bool, addCallerSkip int) *Log {
+	opts := slog.HandlerOptions{
+		AddSource:   caller,
+		Level:       slog.LevelDebug,
+		ReplaceAttr: nil,
+	}
+
+	var handler slog.Handler
+
+	switch format {
+	case textFormat:
+	case jsonFormat:
+	default:
+		panic("invalid log format: " + format)
+	}
+
+	if format == textFormat {
+		handler = opts.NewTextHandler(w)
+	} else {
+		handler = opts.NewJSONHandler(w)
+	}
+	logger := slog.New(handler)
+
+	return &Log{Logger: logger, addCallerSkip: addCallerSkip}
+
 	//encoderCfg := zapcore.EncoderConfig{
 	//	MessageKey:     "message",
 	//	EncodeDuration: zapcore.StringDurationEncoder,
@@ -87,8 +120,8 @@ func NewWith(w io.Writer, format string, timestamp, utc, level, caller bool, add
 type Log struct {
 	*slog.Logger
 
-	// callerSkip is additional caller callerSkip.
-	callerSkip int
+	// addCallerSkip is additional caller addCallerSkip.
+	addCallerSkip int
 }
 
 type keyVal struct {
@@ -107,8 +140,8 @@ func (l *Log) WarnIfError(err error) {
 // AddCallerSkip adds additional caller skip.
 func (l *Log) AddCallerSkip(skip int) lg.Log {
 	return &Log{
-		Logger:     l.Logger,
-		callerSkip: l.callerSkip + skip,
+		Logger:        l.Logger,
+		addCallerSkip: l.addCallerSkip + skip,
 	}
 }
 func (l *Log) WarnIfFuncError(fn func() error) {
@@ -137,6 +170,10 @@ func (l *Log) WarnIfCloseError(c io.Closer) {
 
 	//logger := l.Desugar().WithOptions(zap.AddCallerSkip(1))
 	l.Warn(err.Error())
+}
+
+func (l *Log) Error(msg string, args ...any) {
+	l.Logger.LogDepth(2+l.addCallerSkip, slog.LevelError, msg, args...)
 }
 
 func (l *Log) With(key string, val any) lg.Log {
