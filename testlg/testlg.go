@@ -174,6 +174,22 @@ func (l *Log) Error(format string, v ...any) {
 	l.t.Log(string(stripNewLineEnding(output)))
 }
 
+// Err implements Log.Err
+func (l *Log) Err(err error) {
+	if err == nil {
+		return
+	}
+
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	l.impl.Error(err.Error())
+	output, _ := io.ReadAll(l.buf)
+
+	l.t.Helper()
+	l.t.Log(string(stripNewLineEnding(output)))
+}
+
 // With implements Log.With.
 func (l *Log) With(key string, val any) lg.Log {
 	// We want to prevent duplicate keys. The below code

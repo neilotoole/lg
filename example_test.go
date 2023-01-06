@@ -13,6 +13,6 @@ func Example_zap() {
 
 	// With options
 	log := zaplg.NewWith(os.Stdout, "text", false, true, true, true, 0)
-	log.Debug("Hello", "World")
-	// Output: DEBUG	lg/example_test.go:16:Example_zap	HelloWorld
+	log.Debug("Hello World")
+	// Output: DEBUG	lg/example_test.go:16:Example_zap	Hello World
 }

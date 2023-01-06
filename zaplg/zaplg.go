@@ -126,16 +126,24 @@ type keyVal struct {
 
 func (l *Log) Debug(msg string, args ...any) {
 	logger := l.Desugar().WithOptions(zap.AddCallerSkip(1))
-	logger.Sugar().Debugf(msg, args)
+	logger.Sugar().Debugf(msg, args...)
 }
 
 func (l *Log) Warn(msg string, args ...any) {
 	logger := l.Desugar().WithOptions(zap.AddCallerSkip(1))
-	logger.Sugar().Warnf(msg, args)
+	logger.Sugar().Warnf(msg, args...)
 }
 func (l *Log) Error(msg string, args ...any) {
 	logger := l.Desugar().WithOptions(zap.AddCallerSkip(1))
-	logger.Sugar().Errorf(msg, args)
+	logger.Sugar().Errorf(msg, args...)
+}
+
+func (l *Log) Err(err error) {
+	if err == nil {
+		return
+	}
+	logger := l.Desugar().WithOptions(zap.AddCallerSkip(1))
+	logger.Sugar().Error(err)
 }
 
 func (l *Log) WarnIfError(err error) {

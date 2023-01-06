@@ -176,6 +176,13 @@ func (l *Log) Error(msg string, args ...any) {
 	l.Logger.LogDepth(2+l.addCallerSkip, slog.LevelError, msg, args...)
 }
 
+func (l *Log) Err(err error) {
+	if err == nil {
+		return
+	}
+	l.Logger.Error(err.Error(), err)
+}
+
 func (l *Log) With(key string, val any) lg.Log {
 	sl := l.Logger
 

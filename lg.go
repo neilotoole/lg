@@ -49,6 +49,9 @@ type Log interface {
 	// Error logs at ERROR level.
 	Error(msg string, args ...any)
 
+	// Err logs err at ERROR level, if err is non-nil.
+	Err(err error)
+
 	// With returns a child Log instance that has a structured
 	// field key with val.
 	With(key string, val any) Log
@@ -104,6 +107,9 @@ func (discardLog) WarnIfCloseError(c io.Closer) {
 }
 
 func (discardLog) Error(format string, a ...any) {
+}
+
+func (discardLog) Err(err error) {
 }
 
 func (discardLog) With(key string, val any) Log {
