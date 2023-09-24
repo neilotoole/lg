@@ -9,6 +9,11 @@
 unstructured logging interface for enterprise applications.
 It is not suggested for production use.
 
+> **Note**
+> With the release of the stdlib [`slog`](https://go.dev/blog/slog) package in [Go 1.21](https://go.dev/blog/go1.21),
+> the debate about Go logging interfaces is over, and this package is now retired.
+
+
 ## TLDR
 
 Log levels `ERROR`, `WARN` and `DEBUG` are appropriate for many enterprise applications.
